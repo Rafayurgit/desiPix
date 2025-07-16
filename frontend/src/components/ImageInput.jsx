@@ -18,6 +18,7 @@ export default function ImageInput() {
   const [selectedFile,SetSelectedFile]= useState(null);
   const [targetFormat, SetTargetFormat]= useState("");
   const [previewUrl, setPreviewUrl]= useState("");
+  const [showWarning, setShowWarning]= useState("");
 
   const handelFileChange=(e)=>{
     const file= e.target.files[0];
@@ -29,6 +30,16 @@ export default function ImageInput() {
 
   const handelFormat=(e)=>{
     SetTargetFormat(e.target.value);
+  }
+
+  const handleConvert = ()=>{
+    if(!selectedFile || !targetFormat) {
+      setShowWarning("Select the format first")
+      return;
+    }
+
+    setShowWarning("");
+      
   }
 
 
@@ -48,7 +59,7 @@ export default function ImageInput() {
           value={targetFormat}
           onChange={handelFormat}
           >
-            <option>Select Format</option>
+            <option value="" disabled hidden>Select Format</option>
             {acceptedFormats.map((format, idx)=>(
               <option key={idx} value={format}>{format.toUpperCase()}</option>
             ))}
@@ -56,6 +67,8 @@ export default function ImageInput() {
 
         <button 
         className='w-full bg-orange-500 hover:bg-orange-600 cursor-pointer text-white font-semibold py-2 px-4 rounded disabled:opacity-50 p-1'
+        onClick={handleConvert}
+        disabled={!selectedFile || !targetFormat}
         >Convert</button>
       </div>
 
@@ -71,7 +84,7 @@ export default function ImageInput() {
         />
       </label>
 
-        
+        <p className='text-red-500' >{showWarning}</p>
         
         </>
         
