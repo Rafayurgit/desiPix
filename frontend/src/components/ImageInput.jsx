@@ -78,6 +78,7 @@ export default function ImageInput() {
 
         <label htmlFor="">
         <input type="file"
+        name='image'
         onChange={handelFileChange}
         accept='image/*' 
         className=' block w-full justify-between text-sm  text-gray-700 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700  '
