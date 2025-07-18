@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 
-export const converImageFormat = async (inputPath, targetFormat)=>{
+export const convertImageFormat = async (inputPath, targetFormat)=>{
     const outputPath = inputPath+"."+targetFormat;
 
     await sharp(inputPath).toFormat(targetFormat).toFile(outputPath);

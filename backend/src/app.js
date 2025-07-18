@@ -11,6 +11,6 @@ app.get("/", (req,res)=>{
     res.send("Welcome to DesiPix backend");
 })
 
-app.get("/upload", imageRoutes);
+app.use("/upload", imageRoutes);
 
 export default app;
