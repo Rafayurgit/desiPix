@@ -19,6 +19,8 @@ export default function ImageInput() {
   const [targetFormat, SetTargetFormat]= useState("");
   const [previewUrl, setPreviewUrl]= useState("");
   const [showWarning, setShowWarning]= useState("");
+  const [loading, setLoading]= useState(false);
+  const [convertedUrl, setConvertedUrl]= useState("");
 
   const handelFileChange=(e)=>{
     const file= e.target.files[0];
@@ -32,10 +34,30 @@ export default function ImageInput() {
     SetTargetFormat(e.target.value);
   }
 
-  const handleConvert = ()=>{
+  const handleConvert = async()=>{
     if(!selectedFile || !targetFormat) {
       setShowWarning("Select the format first")
       return;
+    }
+
+    const formData = new formData();
+    formData.append("Image", selectedFile);
+    formData.append("Format", targetFormat);
+
+    try {
+      setLoading(true);
+      const response =await axiox.post("http://localhost:5000/upload", formData,{
+        responseType: "Blob"
+      })
+
+      const blob= new blob([response.data]);
+      const downloadUrl = URL.createObjectURL(blob);
+      setConvertedUrl(downloadUrl);
+      setLoading(false);
+    } catch (error) {
+      console.log("Conversion error", error);
+      setError("Failed to convert image")
+      setLoading(false)
     }
 
     setShowWarning("");
@@ -87,10 +109,23 @@ export default function ImageInput() {
 
         <p className='text-red-500' >{showWarning}</p>
         
-        </>
-        
+        </>      
+      )}
 
-      
+
+      {convertedUrl ? (
+        <a href={convertedUrl}
+          download={`convertedUrl.${targetFormat}`}
+          className="mt-4 text-indigo-600 underline hover:text-indigo-800"
+        >
+          Download Converted Image
+        </a>
+
+      ) :(
+        <>
+                {error && <p className='text-red-500 mt-2'> {error}</p>}
+
+        </>
       )}
 
       
