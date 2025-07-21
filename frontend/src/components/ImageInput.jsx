@@ -77,12 +77,14 @@ export default function ImageInput({setConvertedUrl}) {
   };
 
   return (
-    <div className="flex flex-col items-center w-full md:w-1/2 bg-gray-100 p-6 rounded shadow">
+    <div id="imageInput" className="flex flex-col items-center w-full md:w-1/2 bg-gray-100 p-6 rounded shadow">
       <h1 className="text-xl font-semibold mb-4">Upload Image</h1>
 
       {previewUrl ? (
         <>
-          <img src={previewUrl} alt={selectedFile?.name || "preview"} className="" />
+          <img src={previewUrl} 
+          alt={selectedFile?.name || "preview"} 
+          className="w-full h-64 object-contain border rounded bg-white mb-2" />
 
           <div className="flex flex-row p-5 justify-between m-3">
             <select
@@ -101,7 +103,7 @@ export default function ImageInput({setConvertedUrl}) {
             </select>
 
             <button
-              className="w-full bg-orange-500 hover:bg-orange-600 cursor-pointer text-white font-semibold py-2 px-4 rounded disabled:opacity-50 p-1"
+              className="w-full bg-indigo-800 hover:bg-indigo-300 cursor-pointer text-white font-semibold py-2 px-4 rounded disabled:opacity-50 p-1"
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat}
             >
@@ -112,7 +114,7 @@ export default function ImageInput({setConvertedUrl}) {
       ) : (
         <>
           <label htmlFor="image" className="block cursor-pointer" >
-            Upload Image Here
+            +
             <input
               type="file"
               name="image"
@@ -122,9 +124,11 @@ export default function ImageInput({setConvertedUrl}) {
             />
           </label>
 
-          
+          <p className="text-sm text-gray-600 mt-2">
+            Supported formats: {acceptedFormats.join(",").toUpperCase()}
+          </p>
 
-          <p className="text-red-500">{showWarning}</p>
+          <p className="text-red-500">{showWarning} </p>
         </>
       )}
 

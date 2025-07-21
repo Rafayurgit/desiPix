@@ -15,7 +15,7 @@ const [convertedUrl, setConvertedUrl] = useState("");
             <div className="md:w-1/2 text-center md:text-left">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">Welcome to DesiPix</h1>
             <p className="text-lg text-gray-600 mb-6">Convert any image into any image extension</p>
-            <button className="bg-indigo-600 text-white px-6 py-2 rounded cursor-pointer">Get Started</button>
+            <button className="bg-indigo-600 text-white px-6 py-2 rounded cursor-pointer" >Get Started</button>
             </div>
 
             <div className="w-10 md:w-1/2">
