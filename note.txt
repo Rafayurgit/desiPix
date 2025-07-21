@@ -1,0 +1,75 @@
+Q.(im using sharp for image extension convert project and i have some question, like these are formats i added what else i can add, and what type of format sharp doest support or doest work same way, and for those what approach i need and technology lib tool i need.)
+->
+gif (animated)	Only first frame is processed	Use gifencoder, gifsicle, or ffmpeg
+svg	Input only, output not supported	Use svg2img for raster conversion
+heic	Input supported only if Sharp is built with libheif	Or use heic-convert, or convert via ffmpeg
+bmp	Input supported, output not	Use jimp, gm, or imagemagick
+ico	Not directly supported	Use imagemagick or sharp-ico
+
+
+
+
+
+
+
+
+
+
+
+
+-------FrontEnd----------------
+ D:\pro Files\WEB DEV\desiPix> ls
+
+
+    Directory: D:\pro Files\WEB DEV\desiPix
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        18-07-2025     22:51                backend
+d-----        11-07-2025     00:42                frontend
+-a----        20-07-2025     15:49            649 note.txt
+
+
+PS D:\pro Files\WEB DEV\desiPix> cd .\frontend\
+PS D:\pro Files\WEB DEV\desiPix\frontend> ls
+
+
+    Directory: D:\pro Files\WEB DEV\desiPix\frontend
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        12-07-2025     01:08                node_modules
+d-----        14-07-2025     00:56                public
+d-----        12-07-2025     00:44                src
+-a----        11-07-2025     00:31            253 .gitignore
+-a----        11-07-2025     00:31            763 eslint.config.js
+-a----        14-07-2025     00:58            358 index.html
+-a----        12-07-2025     01:08         123212 package-lock.json
+-a----        12-07-2025     01:08            778 package.json
+-a----        11-07-2025     00:31            856 README.md
+-a----        11-07-2025     00:33            221 vite.config.js
+
+
+PS D:\pro Files\WEB DEV\desiPix\frontend> cd .\src\
+PS D:\pro Files\WEB DEV\desiPix\frontend\src> ls
+
+
+    Directory: D:\pro Files\WEB DEV\desiPix\frontend\src
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        14-07-2025     00:59                assets
+d-----        12-07-2025     01:48                components
+d-----        12-07-2025     00:44                hooks
+d-----        12-07-2025     00:57                pages
+d-----        12-07-2025     00:44                utils
+-a----        11-07-2025     00:31            606 App.css
+-a----        12-07-2025     01:04            284 App.jsx
+-a----        11-07-2025     00:33             22 index.css
+-a----        11-07-2025     00:31            229 main.jsx
+
+
+PS D:\pro Files\WEB DEV\desiPix\frontend\src> 

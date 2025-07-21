@@ -1,12 +1,15 @@
 import React from 'react';
 
-export default function ImageOutput() {
+export default function ImageOutput({convertedUrl}) {
+
+  if(!convertedUrl) return null;
 
 
   return (
     <div className="w-full md:w-1/2 bg-gray-100 p-6 rounded shadow">
       <h2 className="text-xl font-semibold mb-4">Converted Image</h2>
       <img
+      src={convertedUrl}
         alt="Converted"
         className="w-full rounded mb-4"
       />

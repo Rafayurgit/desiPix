@@ -15,16 +15,16 @@ const acceptedFormats = [
   "svg", // Scalable Vector Graphics (not pixel-based but still image)
 ];
 
-export default function ImageInput() {
+export default function ImageInput({setConvertedUrl}) {
   const [selectedFile, SetSelectedFile] = useState(null);
   const [targetFormat, SetTargetFormat] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [showWarning, setShowWarning] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [convertedUrl, setConvertedUrl] = useState("");
+  // const [convertedUrl, setConvertedUrl] = useState("");
 
-  const handelFileChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -39,7 +39,7 @@ export default function ImageInput() {
     setShowWarning("");
   };
 
-  const handelFormat = (e) => {
+  const handleFormat = (e) => {
     SetTargetFormat(e.target.value);
   };
 
@@ -88,7 +88,7 @@ export default function ImageInput() {
             <select
               className="cursor-pointer"
               value={targetFormat}
-              onChange={handelFormat}
+              onChange={handleFormat}
             >
               <option value="" disabled hidden>
                 Select Format
@@ -116,33 +116,19 @@ export default function ImageInput() {
             <input
               type="file"
               name="image"
-              onChange={handelFileChange}
+              onChange={handleFileChange}
               accept="image/*"
               className="block w-full justify-between text-sm text-gray-700 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700  "
             />
           </label>
 
+          
+
           <p className="text-red-500">{showWarning}</p>
         </>
       )}
 
-      {loading ? (
-        <ComponentLoader />
-      ) : (
-        <>
-          {convertedUrl ? (
-            <a
-              href={convertedUrl}
-              download={`convertedUrl-${selectedFile.name.split(".")[0]}.${targetFormat}`}
-              className="mt-4 text-indigo-600 underline hover:text-indigo-800"
-            >
-              Download Converted Image
-            </a>
-          ) : (
-            <>{error && <p className="text-red-500 mt-2"> {error}</p>}</>
-          )}
-        </>
-      )}
+      {loading && <ComponentLoader /> }
     </div>
   );
 }
