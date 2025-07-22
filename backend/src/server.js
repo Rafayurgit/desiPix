@@ -6,6 +6,6 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, ()=>{
-    console.log(`App is listining on httlp://localhost:${PORT}`);    
+    console.log(`App is listining on http://localhost:${PORT}`);    
 })
 

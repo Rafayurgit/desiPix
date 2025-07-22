@@ -44,6 +44,7 @@ export default function ImageInput({setConvertedUrl}) {
   };
 
   const handleConvert = async () => {
+
     if (!selectedFile || !targetFormat) {
       setShowWarning("Select the format first");
       return;
@@ -56,10 +57,10 @@ export default function ImageInput({setConvertedUrl}) {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:5000/upload",
+        "http://localhost:8080/upload",
         formData,
         {
-          responseType: "Blob",
+          responseType: "blob",
         }
       );
 
@@ -86,6 +87,8 @@ export default function ImageInput({setConvertedUrl}) {
           alt={selectedFile?.name || "preview"} 
           className="w-full h-64 object-contain border rounded bg-white mb-2" />
 
+          {selectedFile?.name}
+
           <div className="flex flex-row p-5 justify-between m-3">
             <select
               className="cursor-pointer"
@@ -103,18 +106,20 @@ export default function ImageInput({setConvertedUrl}) {
             </select>
 
             <button
-              className="w-full bg-indigo-800 hover:bg-indigo-300 cursor-pointer text-white font-semibold py-2 px-4 rounded disabled:opacity-50 p-1"
+              className="w-full bg-indigo-800 hover:bg-indigo-300 cursor-pointer text-white font-semibold py-2 px-4 rounded p-1"
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat}
             >
               Convert
             </button>
+
+
           </div>
         </>
       ) : (
         <>
           <label htmlFor="image" className="block cursor-pointer" >
-            +
+            
             <input
               type="file"
               name="image"
@@ -124,13 +129,12 @@ export default function ImageInput({setConvertedUrl}) {
             />
           </label>
 
-          <p className="text-sm text-gray-600 mt-2">
-            Supported formats: {acceptedFormats.join(",").toUpperCase()}
-          </p>
 
-          <p className="text-red-500">{showWarning} </p>
+          
         </>
       )}
+      
+      <p className="text-red-500">{showWarning} </p>
 
       {loading && <ComponentLoader /> }
     </div>

@@ -1,18 +1,19 @@
-import { convertImageFormat } from "../services/image.service"
-import fs from fs;
+// import { convertImageFormat } from "../services/image.service.js";
+import {convertImageFormat} from "../services/image.service.js"
+import fs from "fs";
 
 export const convertImageController = async (req,res)=>{
 
     const file = req.file;
-    const {format} =req.body;
+    const {Format} =req.body;
 
-    if(!file || !format){
+    if(!file || !Format){
         return res.status(400).json({message:"File and format are required"})
     }
 
     try {
-        const outputPath = await convertImageFormat(file.path, format);
-        res.download(outputPath, `converted.${format}`, (error)=>{
+        const outputPath = await convertImageFormat(file.path, Format);
+        res.download(outputPath, `converted.${Format}`, (error)=>{
             if(!error){
                 fs.unlinkSync(file.path)
                 fs.unlinkSync(outputPath)
