@@ -1,0 +1,20 @@
++-------------------------+------------------------------------------------------------+
+|        Problem          |                           Fix                             |
++-------------------------+------------------------------------------------------------+
+| 404 Not Found Error     | Changed backend route from:                                |
+|                         |    app.use("/upload", imageRoutes)                         |
+|                         | to:                                                        |
+|                         |    app.use("/", imageRoutes)                               |
++-------------------------+------------------------------------------------------------+
+| 400 Bad Request Error   | Field name mismatch in FormData. Fixed this:               |
+|                         |    ❌ formData.append("Format", targetFormat)              |
+|                         |    ✅ formData.append("format", targetFormat)              |
++-------------------------+------------------------------------------------------------+
+| Multer Upload Field     | Ensure this matches in router:                             |
+|                         |    upload.single("Image")                                  |
+|                         | And in frontend:                                           |
+|                         |    formData.append("Image", selectedFile)                  |
++-------------------------+------------------------------------------------------------+
+| Upload Folder Confusion | No need to manually create /uploads folder                 |
+|                         | `multer` handles temp file creation automatically          |
++-------------------------+------------------------------------------------------------+

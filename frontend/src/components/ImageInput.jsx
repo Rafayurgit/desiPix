@@ -37,6 +37,7 @@ export default function ImageInput({setConvertedUrl}) {
     SetSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
     setShowWarning("");
+
   };
 
   const handleFormat = (e) => {
@@ -106,7 +107,8 @@ export default function ImageInput({setConvertedUrl}) {
             </select>
 
             <button
-              className="w-full bg-indigo-800 hover:bg-indigo-300 cursor-pointer text-white font-semibold py-2 px-4 rounded p-1"
+              className={`w-full ${!selectedFile || !targetFormat ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-800 cursor-pointer hover:bg-indigo-300 "}  
+                 text-white font-semibold py-2 px-4 rounded p-1`}
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat}
             >
