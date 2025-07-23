@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import ComponentLoader from "./componentLoader";
+import {useDropzone} from "react-dropzone";
 
 const acceptedFormats = [
   "jpg", // JPEG
@@ -23,6 +24,23 @@ export default function ImageInput({setConvertedUrl}) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   // const [convertedUrl, setConvertedUrl] = useState("");
+
+  const {getRootProps}= useDropzone({
+    accept:{
+      "image/*":[]
+    },
+
+    maxFiles:1,
+    onDrop: (acceptedFormats)=>{
+      const file =acceptedFormats[0];
+
+      if(file){
+        SetSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setShowWarning("");
+      }
+    }
+  })
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -120,6 +138,11 @@ export default function ImageInput({setConvertedUrl}) {
         </>
       ) : (
         <>
+
+        <div 
+        {...getRootProps()}
+        className=" w-full p-6 border-2 border-dashed border-indigo-400 rounded-lg bg-white hover:bg-gray-100 cursor-pointer text-center">
+          
           <label htmlFor="image" className="block cursor-pointer" >
             
             <input
@@ -130,6 +153,9 @@ export default function ImageInput({setConvertedUrl}) {
               className="block w-full justify-between text-sm text-gray-700 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700  "
             />
           </label>
+        </div>
+
+          
 
 
           
