@@ -23,6 +23,10 @@ export default function ImageInput({setConvertedUrl}) {
   const [showWarning, setShowWarning] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastConversion, setLastConversion]= useState({
+    signature:"",
+    format:""
+  })
   // const [convertedUrl, setConvertedUrl] = useState("");
 
   const {getRootProps}= useDropzone({
@@ -41,6 +45,12 @@ export default function ImageInput({setConvertedUrl}) {
       }
     }
   })
+
+  const generateSignature =(file)=>{
+    return `${file.name}_${file.size}_${file.lastModified};`
+  }
+
+  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -69,6 +79,13 @@ export default function ImageInput({setConvertedUrl}) {
       return;
     }
 
+    const signature = generateSignature(selectedFile);
+
+    if(lastConversion.signature=== generateSignature(selectedFile) && lastConversion.format=== targetFormat){
+    setShowWarning("This file is has already been converted to this format.")
+    return;
+  }
+
     const formData = new FormData();
     formData.append("Image", selectedFile);
     formData.append("Format", targetFormat);
@@ -88,6 +105,10 @@ export default function ImageInput({setConvertedUrl}) {
       
       const downloadUrl = URL.createObjectURL(blob);
       setConvertedUrl(downloadUrl);
+      setLastConversion({
+      signature: signature,
+      format: targetFormat
+    })
       setLoading(false);
     } catch (error) {
       console.log("Conversion error", error);
@@ -96,6 +117,8 @@ export default function ImageInput({setConvertedUrl}) {
     }
 
     setShowWarning("");
+
+    
   };
 
   return (
