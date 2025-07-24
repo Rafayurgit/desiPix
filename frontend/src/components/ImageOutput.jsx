@@ -14,8 +14,10 @@ export default function ImageOutput({ convertedUrl }) {
           <img
             src={convertedUrl}
             alt="Converted"
-            className="w-full rounded mb-4"
+            className="w-full h-64 object-contain border rounded bg-white mb-2"
           />
+          {/* {convertedUrl?.name} */}
+
           <a
             href={convertedUrl}
             download="converted-image"

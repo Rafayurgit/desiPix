@@ -83,7 +83,9 @@ export default function ImageInput({setConvertedUrl}) {
         }
       );
 
-      const blob = new Blob([response.data]);
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
+      console.log(blob);
+      
       const downloadUrl = URL.createObjectURL(blob);
       setConvertedUrl(downloadUrl);
       setLoading(false);
