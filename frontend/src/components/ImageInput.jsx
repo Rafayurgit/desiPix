@@ -187,8 +187,8 @@ export default function ImageInput({setConvertedUrl}) {
         </>
       )}
       
-      <p className="text-red-500">{showWarning} </p>
-
+      {showWarning && <p className="text-red-600"> {showWarning}</p> }
+      {error && <p className="text-red-600">{error}</p>}
       {loading && <ComponentLoader /> }
     </div>
   );
