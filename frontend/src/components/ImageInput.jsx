@@ -30,7 +30,7 @@ export default function ImageInput({ setConvertedUrl }) {
 
   // const [convertedUrl, setConvertedUrl] = useState("");
 
-  const { getRootProps } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "image/*": [],
     },
@@ -49,6 +49,16 @@ export default function ImageInput({ setConvertedUrl }) {
 
   const generateSignature = (file) => {
     return `${file.name}_${file.size}_${file.lastModified};`;
+  };
+
+  const handelReset = () => {
+    SetSelectedFile(null);
+    setPreviewUrl("");
+    SetTargetFormat("");
+    setShowWarning("");
+    setError("");
+    setConvertedUrl(""); // clear output
+    setLastConversion({ signature: "", format: "" });
   };
 
   const handleFileChange = (e) => {
@@ -155,16 +165,23 @@ export default function ImageInput({ setConvertedUrl }) {
             </select>
 
             <button
-              className={`w-full ${
+              className={`${
                 !selectedFile || !targetFormat
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-indigo-600 hover:bg-indigo-700 transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer"
               }  
-                 `}
+                 text-white font-semibold py-2 px-4 rounded p-1`}
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat}
             >
               Convert
+            </button>
+
+            <button
+              className="bg-red-500 hover:bg-red-600 transition duration-200 text-white px-4 py-2 rounded shadow-md"
+              onClick={handelReset}
+            >
+              Reset
             </button>
           </div>
         </>
