@@ -14,6 +14,7 @@ const acceptedFormats = [
   "heic", // High-Efficiency Image Container (used by iPhones)
   "avif", // AV1 Image File Format (next-gen compression)
   "svg", // Scalable Vector Graphics (not pixel-based but still image)
+  "ico",
 ];
 
 export default function ImageInput({ setConvertedUrl }) {
@@ -140,6 +141,7 @@ export default function ImageInput({ setConvertedUrl }) {
 
       {previewUrl ? (
         <>
+        
           <img
             src={previewUrl}
             alt={selectedFile?.name || "preview"}
@@ -198,7 +200,7 @@ export default function ImageInput({ setConvertedUrl }) {
                 type="file"
                 name="image"
                 onChange={handleFileChange}
-                accept="image/*"
+                accept="image/*, .heic"
                 className="block w-full justify-between text-sm text-gray-700 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700  "
               />
             </label>

@@ -6,10 +6,28 @@ heic	Input supported only if Sharp is built with libheif	Or use heic-convert, or
 bmp	Input supported, output not	Use jimp, gm, or imagemagick
 ico	Not directly supported	Use imagemagick or sharp-ico
 
+till now-------------------
+Category	Count
+✅ Already Supporting	6 (JPG, PNG, WEBP, TIFF, BMP, AVIF)
+🔜 Worth Adding Soon	2 (ICO, HEIC/HEIF)
+❌ Skip for Now	4+ (RAW, PSD, EXR, etc.)
 
+next---------------------
+show we do this, one by one or other improvemnts and suggestions.
 
+✅ Drag and drop support (already there but can be polished).
 
+🗃️ Keep conversion history in localStorage.
 
+⏳ Progress bar during upload/conversion.
+
+📱 Responsive improvements for mobile UI.
+
+📦 Add image compression toggle
+
+🧾 Show metadata (exif, size)
+
+🪄 Add batch conversion (multiple files)
 
 
 
