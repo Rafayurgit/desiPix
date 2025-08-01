@@ -87,6 +87,14 @@ export default function ImageInput({ setConvertedUrl }) {
       return;
     }
 
+    if(selectedFile && targetFormat){
+      const ext = selectedFile.name.split('.').pop().toLowerCase();
+      if(ext === targetFormat.toLocaleLowerCase() || (ext === "jpg" && targetFormat === "jpeg") || (ext === "jpeg" && targetFormat === "jpg")){
+        setShowWarning("You are trying to convert the file to the same format");
+        return;
+    }
+  }
+
     const signature = generateSignature(selectedFile);
 
     if (
@@ -108,6 +116,7 @@ export default function ImageInput({ setConvertedUrl }) {
         formData,
         {
           responseType: "blob",
+          timeout: 120000
         }
       );
 
