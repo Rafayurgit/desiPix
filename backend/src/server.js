@@ -5,7 +5,9 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, ()=>{
+const server = app.listen(PORT, ()=>{
     console.log(`App is listining on http://localhost:${PORT}`);    
 })
 
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120100;
