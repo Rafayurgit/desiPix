@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import ComponentLoader from "./componentLoader";
 import { useDropzone } from "react-dropzone";
+import heicPreview from "../assets/heicPreview.png"
 
 // Helper functions
 const getExtension = filename =>
@@ -36,7 +37,12 @@ export default function ImageInput({ setConvertedUrl , setLoading}) {
       setPreviewUrl("");
       return;
     }
-    setPreviewUrl(URL.createObjectURL(file));
+    if(ext === "heic" || "heif"){
+      setPreviewUrl(heicPreview)
+    }else{
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+    
     setSelectedFile(file);
     setFeedback({ warn: "", error: "" });
   }, []);
