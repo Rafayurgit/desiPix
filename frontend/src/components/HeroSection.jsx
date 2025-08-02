@@ -6,6 +6,7 @@ import { useState } from 'react';
 export default function HeroSection() {
 
 const [convertedUrl, setConvertedUrl] = useState("");
+const [loading, setLoading] = useState("");
 const converterSectionRef = useRef(null);
 
 const handleScrollToConverter  = () => {
@@ -38,8 +39,8 @@ const handleScrollToConverter  = () => {
         <div 
         ref={converterSectionRef}
          className='mx-auto w-full px-4 md:px-8 mt-28 flex flex-col md:flex-row gap-y-8 md:gap-6 justify-between bg-white/40 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-gray-200'>
-                <ImageInput setConvertedUrl={setConvertedUrl} />
-                <ImageOutput  convertedUrl={convertedUrl} />
+                <ImageInput setConvertedUrl={setConvertedUrl} setLoading={setLoading} />
+                <ImageOutput  convertedUrl={convertedUrl} loading={loading} />
         </div>
     </section>
 
