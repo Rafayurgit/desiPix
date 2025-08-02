@@ -21,7 +21,7 @@ const fileFilter= (req, file, cb )=>{
     return cb(new Error("Only supported image formats are allowed"), false);
   }
   cb(null, true);
-
+}
 
 
 const upload= multer({
