@@ -1,6 +1,7 @@
 import React from "react";
+import ComponentLoader from "./componentLoader";
 
-export default function ImageOutput({ convertedUrl }) {
+export default function ImageOutput({ convertedUrl , loading}) {
 
   
   return (
@@ -10,6 +11,7 @@ export default function ImageOutput({ convertedUrl }) {
       {!convertedUrl ? (
         <p className="text-gray-500">
           Your converted image will appear here after processing.
+          {loading && <ComponentLoader />}
         </p>
       ) : (
         <>
