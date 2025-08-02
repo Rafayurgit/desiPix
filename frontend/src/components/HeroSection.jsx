@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import ImageInput from './ImageInput'
 import ImageOutput from './ImageOutput'
 import DesiPix from "../assets/DesiPix.png";
+import DesiPixBlue from "../assets/DesiPixBlue.png"
 import { useState } from 'react';
 export default function HeroSection() {
 
@@ -26,11 +27,12 @@ const handleScrollToConverter  = () => {
             <p className="text-lg text-gray-600 mb-6">Convert any image into any image extension</p>
             <button 
             onClick={handleScrollToConverter }
+            style={{ backgroundColor: '#1B2B55' }} 
             className="bg-indigo-600 hover:bg-indigo-700 transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer" >Get Started</button>
             </div>
 
             <div className="w-full md:w-1/2">
-            <img src={DesiPix} alt="Hero" className="w-full" />
+            <img src={DesiPixBlue} alt="Hero" className="w-full" />
             </div>
 
             
