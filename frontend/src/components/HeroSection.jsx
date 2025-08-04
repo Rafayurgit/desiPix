@@ -41,7 +41,7 @@ const handleScrollToConverter  = () => {
         <div 
         ref={converterSectionRef}
          className='mx-auto w-full px-4 md:px-8 mt-28 flex flex-col md:flex-row gap-y-8 md:gap-6 justify-between bg-white/40 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-gray-200'>
-                <ImageInput setConvertedUrl={setConvertedUrl} setLoading={setLoading} />
+                <ImageInput setConvertedUrl={setConvertedUrl} setLoading={setLoading} loading={loading} />
                 <ImageOutput  convertedUrl={convertedUrl} loading={loading} />
         </div>
     </section>

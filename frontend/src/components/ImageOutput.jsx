@@ -9,10 +9,10 @@ export default function ImageOutput({ convertedUrl , loading}) {
       <h2 className="text-xl font-semibold mb-4">Converted Image</h2>
 
       {!convertedUrl ? (
-        <p className="text-gray-500">
+        <div className="text-gray-500">
           Your converted image will appear here after processing.
           {loading && <ComponentLoader />}
-        </p>
+        </div>
       ) : (
         <>
           <img

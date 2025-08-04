@@ -21,7 +21,7 @@ const formatOptions = [
   "jpeg", "png", "webp", "gif", "bmp", "tiff", "heic", "avif", "svg", "ico"
 ];
 
-export default function ImageInput({ setConvertedUrl , setLoading}) {
+export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [targetFormat, setTargetFormat] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -37,7 +37,7 @@ export default function ImageInput({ setConvertedUrl , setLoading}) {
       setPreviewUrl("");
       return;
     }
-    if(ext === "heic" || "heif"){
+    if(ext === "heic" || ext=== "heif" ){
       setPreviewUrl(heicPreview)
     }else{
       setPreviewUrl(URL.createObjectURL(file));
@@ -156,16 +156,17 @@ export default function ImageInput({ setConvertedUrl , setLoading}) {
           <div className="flex flex-row p-5 justify-between m-3">
             {formatDropdown}
             <button
-              className={`${!selectedFile || !targetFormat
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700"} transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer`}
+              className={`transition duration-200 text-white px-6 py-2 rounded shadow-md 
+    ${!selectedFile || !targetFormat || loading 
+      ? "bg-gray-400 cursor-not-allowed" 
+      : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"}`}
               onClick={handleConvert}
-              disabled={!selectedFile || !targetFormat }
+              disabled={!selectedFile || !targetFormat || loading}
             >
               Convert
             </button>
             <button
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md cursor-pointer"
               onClick={handleReset}
             >
               Reset
