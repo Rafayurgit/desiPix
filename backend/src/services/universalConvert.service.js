@@ -6,24 +6,29 @@ import path from "path";
 import { canUseImageMagick, convertWithImageMagick } from "./imagick.service.js";
 import { convertSVGtoRaster } from "./svg.service.js";
 import { isAnimatedFormat } from "./animated.service.js";
+import { convertWithLogging } from "../utils/convertLogger.js";
 
 export async function universalConvert(inputPath, requestedOutputFormat) {
-  const fileType = await fileTypeFromFile(inputPath);
-  const detectedInputFormat = fileType?.ext?.toLowerCase() ?? path.extname(inputPath).replace(".", "").toLowerCase();
+  let fileType = await fileTypeFromFile(inputPath);
+  let detectedInputFormat = fileType?.ext?.toLowerCase() ?? path.extname(inputPath).replace(".", "").toLowerCase();
 
   let outputFormat = requestedOutputFormat.toLowerCase();
+
   if (outputFormat === "jpg") outputFormat = "jpeg";
   if (outputFormat === "tif") outputFormat = "tiff";
+
+  if(detectedInputFormat==="jpg") detectedInputFormat="jpeg";
+  if(detectedInputFormat==="tif") detectedInputFormat="tiff";
 
 
   if (["heic", "heif"].includes(detectedInputFormat)) {
     if (["jpeg", "png"].includes(outputFormat)) {
-      return await convertHEIC(inputPath, outputFormat);
+      return await convertWithLogging("HeicConvert", convertHEIC, inputPath, outputFormat);
     }
 
     // HEIC fallback: heic -> png -> desired format
-    const tempPNG = await convertHEIC(inputPath, "png");
-    const outPath = tempPNG + "." + outputFormat;
+    let tempPNG = await convertHEIC(inputPath, "png");
+    let outPath = tempPNG + "." + outputFormat;
 
     try {
       await sharp(tempPNG).toFormat(outputFormat).toFile(outPath);
@@ -38,18 +43,23 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     return outPath;
   }
 
-  const supportedSharpInputs = Object.keys(sharp.format).filter(k => sharp.format[k].input);
-  const supportedSharpOutputs = Object.keys(sharp.format).filter(k => sharp.format[k].output);
+  let supportedSharpInputs = Object.keys(sharp.format).filter(k => sharp.format[k].input);
+  let supportedSharpOutputs = Object.keys(sharp.format).filter(k => sharp.format[k].output);
 
   if (supportedSharpInputs.includes(detectedInputFormat) && supportedSharpOutputs.includes(outputFormat)) {
-    const outputPath = inputPath + "." + outputFormat;
-    await sharp(inputPath).toFormat(outputFormat).toFile(outputPath);
-    return outputPath;
+    return await convertWithLogging("sharp", async(inputPath, outputFormat)=>{
+
+      let outputPath = inputPath + "." + outputFormat;
+      await sharp(inputPath).toFormat(outputFormat).toFile(outputPath);
+      return outputPath;
+
+    },inputPath, outputFormat)
+
     
   }
 
   if(canUseImageMagick(detectedInputFormat, outputFormat)){
-    return await convertWithImageMagick(inputPath, outputFormat);
+    return await convertWithLogging("ImageMagic", convertWithImageMagick, inputPath, outputFormat)
   }
 
   if(detectedInputFormat ==="svg"){
