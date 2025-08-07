@@ -118,13 +118,19 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
       const blob = new Blob([response.data], {
         type: response.headers["content-type"]
       });
-      setConvertedUrl(URL.createObjectURL(blob));
+      console.log(blob);
+      
+      const outputName = response.headers["x-converted-filename"] || selectedFile.name.replace(/\.[^.]+$/, '.' + targetFormat);
+      setConvertedUrl({url: URL.createObjectURL(blob), name:outputName});
       setLastConversion({ signature: currSig, format: targetFormat });
     } catch (e) {
       setFeedback({ warn: "", error: "Failed to convert image" });
     }
     setLoading(false);
   };
+
+  
+
 
   // Memoize options for performance
   const formatDropdown = useMemo(() => (

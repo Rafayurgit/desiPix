@@ -16,19 +16,24 @@ export default function ImageOutput({ convertedUrl , loading}) {
       ) : (
         <>
           <img
-            src={convertedUrl}
+            src={convertedUrl.url}
             alt="Converted"
             className="w-full h-64 object-contain border rounded bg-white mb-2"
           />
-          {/* {convertedUrl?.name} */}
 
-          <a
-            href={convertedUrl}
-            download="converted-image"
-            className="bg-green-600 hover:bg-green-700 transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer"
-          >
+          {convertedUrl?.name}
+
+          
+          <div className="flex flex-row justify-center m-3 p-6"> 
+            <a
+              href={convertedUrl?.url}
+              download="converted-image"
+              className="bg-green-600 hover:bg-green-700 transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer"
+            >
             Download
-          </a>
+            </a>
+          </div>
+
         </>
       )}
     </div>

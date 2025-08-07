@@ -24,11 +24,17 @@ export const convertImageController = async (req, res) => {
 
   const originalExt = file.originalname.split(".").pop().toLowerCase();
   const normOriginalExt = originalExt === "jpg" ? "jpeg" : originalExt;
-  const normFormat = Format.toLowerCase() === "jpg" ? "jpeg" : Format.toLowerCase();
+  const normFormat =
+    Format.toLowerCase() === "jpg" ? "jpeg" : Format.toLowerCase();
 
   if (normOriginalExt === normFormat) {
     fs.unlink(file.path, () => {});
-    return res.status(400).json({ message: "Source and target format are the same. Choose a different format." });
+    return res
+      .status(400)
+      .json({
+        message:
+          "Source and target format are the same. Choose a different format.",
+      });
   }
 
   try {
@@ -37,14 +43,18 @@ export const convertImageController = async (req, res) => {
 
     if (processedImages.has(uniqueKey)) {
       fs.unlinkSync(file.path);
-      return res.status(409).json({ message: "Image already converted to this format." });
+      return res
+        .status(409)
+        .json({ message: "Image already converted to this format." });
     }
 
     const outputPath = await universalConvert(file.path, normFormat);
     const absoluteOutputPath = path.resolve(outputPath);
 
     if (!fs.existsSync(absoluteOutputPath)) {
-      return res.status(500).json({ message: "Conversion failed: output file not found." });
+      return res
+        .status(500)
+        .json({ message: "Conversion failed: output file not found." });
     }
 
     processedImages.add(uniqueKey);
@@ -64,20 +74,44 @@ export const convertImageController = async (req, res) => {
       stream.destroy();
     });
 
-    const mimeType= mime.lookup(normFormat) || "application/octet-stream";
+    const mimeType = mime.lookup(normFormat) || "application/octet-stream";
 
-    res.setHeader("Content-Disposition", `attachment; filename=converted.${normFormat}`);
+    const convertedStat = fs.statSync(absoluteOutputPath);
+    const convertedFileInfo = {
+      originalname: `converted.${normFormat}`,
+      path: absoluteOutputPath,
+      size: convertedStat.size,
+      mimetype: mimeType,
+      encoding: "N/A", // Not applicable, unless you're tracking it
+      destination: path.dirname(absoluteOutputPath),
+      filename: path.basename(absoluteOutputPath),
+    };
+
+    console.log("Converted file info:", convertedFileInfo);
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=converted.${normFormat}`
+    );
     res.setHeader("Content-Type", mimeType);
 
     res.on("finish", () => {
-      fs.unlink(file.path, (e) => e && console.error("Failed deleting uploaded file:", e));
-      fs.unlink(absoluteOutputPath, (e) => e && console.error("Failed deleting converted file:", e));
+      fs.unlink(
+        file.path,
+        (e) => e && console.error("Failed deleting uploaded file:", e)
+      );
+      fs.unlink(
+        absoluteOutputPath,
+        (e) => e && console.error("Failed deleting converted file:", e)
+      );
     });
 
     stream.pipe(res);
   } catch (error) {
     console.error("Conversion failed error details:", error);
     fs.unlink(file?.path, () => {});
-    res.status(500).json({ message: "Failed to convert image", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to convert image", error: error.message });
   }
 };
