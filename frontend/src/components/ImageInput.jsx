@@ -79,9 +79,11 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
   // Main convert action
   const handleConvert = async () => {
     setFeedback({ warn: "", error: "" });
+    setLoading(true);
 
     if (!selectedFile || !targetFormat) {
       setFeedback({ warn: "Select the format first", error: "" });
+      setLoading(false);
       return;
     }
 
@@ -92,6 +94,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
       (ext === "jpeg" && targetFormat === "jpg")
     ) {
       setFeedback({ warn: "You are trying to convert the file to the same format", error: "" });
+      setLoading(false);
       return;
     }
 
@@ -101,6 +104,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
       lastConversion.format === targetFormat
     ) {
       setFeedback({ warn: "This file has already been converted to this format.", error: "" });
+      setLoading(false);
       return;
     }
 
@@ -135,7 +139,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
   // Memoize options for performance
   const formatDropdown = useMemo(() => (
     <select
-      className="cursor-pointer"
+      className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-700 cursor-pointer transition"
       value={targetFormat}
       onChange={handleFormatChange}
     >
@@ -159,8 +163,11 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
             alt={selectedFile?.name || "preview"}
             className="w-full h-64 object-contain border rounded bg-white mb-2"/>
           {selectedFile?.name}
-          <div className="flex flex-row p-5 justify-between m-3">
-            {formatDropdown}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 p-5 justify-between items-stretch w-full">
+            <div className="w-full sm:flex-1 min-w-[150px]">
+              {formatDropdown} 
+            </div>
+            
             <button
               className={`transition duration-200 text-white px-6 py-2 rounded shadow-md 
     ${!selectedFile || !targetFormat || loading 
