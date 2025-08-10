@@ -7,6 +7,7 @@ import { canUseImageMagick, convertWithImageMagick } from "./imagick.service.js"
 import { convertSVGtoRaster } from "./svg.service.js";
 import { isAnimatedFormat } from "./animated.service.js";
 import { convertWithLogging } from "../utils/convertLogger.js";
+import { rasterToSvg } from "../utils/rasterToSvg.js";
 
 export async function universalConvert(inputPath, requestedOutputFormat) {
   let fileType = await fileTypeFromFile(inputPath);
@@ -29,6 +30,12 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     // HEIC fallback: heic -> png -> desired format
     let tempPNG = await convertHEIC(inputPath, "png");
     let outPath = tempPNG + "." + outputFormat;
+
+    if(outputFormat === "svg"){
+      let svgPath = await rasterToSvg(tempPNG);
+      try{await fs.unlink(tempPNG);} catch(e){};
+      return svgPath;
+    }
 
     try {
       await sharp(tempPNG).toFormat(outputFormat).toFile(outPath);
@@ -62,6 +69,13 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     return await convertWithLogging("ImageMagic", convertWithImageMagick, inputPath, outputFormat)
   }
 
+  if (
+    ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
+    outputFormat === "svg"
+  ) {
+    return await rasterToSvg(inputPath);
+  }
+
   if(detectedInputFormat ==="svg"){
     return await convertSVGtoRaster(inputPath, outputFormat)
   }
@@ -70,7 +84,6 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     return await convertAnimatedFormat(inputPath, outputFormat);
   }
 
-  
   
 throw new Error(`Conversion from ${detectedInputFormat} to ${outputFormat} not yet supported.`);
   
