@@ -37,6 +37,12 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
       return svgPath;
     }
 
+    if(outputFormat ==="ico"){
+      const icoPath = await convertWithImageMagick(tempPNG, "ico");
+      try{await fs.unlink(tempPNG)} catch(e){}
+      return icoPath;
+    }
+
     try {
       await sharp(tempPNG).toFormat(outputFormat).toFile(outPath);
     } finally {
@@ -48,6 +54,17 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
       // Clean up temp PNG file
     }
     return outPath;
+  }
+
+  if (
+    ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
+    outputFormat === "svg"
+  ) {
+    return await rasterToSvg(inputPath);
+  }
+
+  if(detectedInputFormat ==="svg"){
+    return await convertSVGtoRaster(inputPath, outputFormat)
   }
 
   let supportedSharpInputs = Object.keys(sharp.format).filter(k => sharp.format[k].input);
@@ -69,16 +86,9 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     return await convertWithLogging("ImageMagic", convertWithImageMagick, inputPath, outputFormat)
   }
 
-  if (
-    ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
-    outputFormat === "svg"
-  ) {
-    return await rasterToSvg(inputPath);
-  }
+  
 
-  if(detectedInputFormat ==="svg"){
-    return await convertSVGtoRaster(inputPath, outputFormat)
-  }
+  
 
   if(isAnimatedFormat(detectedInputFormat)){
     return await convertAnimatedFormat(inputPath, outputFormat);
