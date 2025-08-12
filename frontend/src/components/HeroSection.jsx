@@ -4,11 +4,14 @@ import ImageOutput from './ImageOutput'
 import DesiPix from "../assets/DesiPix.png";
 import DesiPixBlue from "../assets/DesiPixBlue.png"
 import { useState } from 'react';
+import ProgressBar from '../common/ProgressBar';
 export default function HeroSection() {
 
 const [convertedUrl, setConvertedUrl] = useState("");
 const [loading, setLoading] = useState("");
+const [progress, setProgress] = useState(0);
 const converterSectionRef = useRef(null);
+
 
 const handleScrollToConverter  = () => {
   const offset = converterSectionRef.current.offsetTop - 100;
@@ -38,10 +41,15 @@ const handleScrollToConverter  = () => {
             
         </div>
 
+        
         <div 
         ref={converterSectionRef}
-         className='mx-auto w-full px-4 md:px-8 mt-28 flex flex-col md:flex-row gap-y-8 md:gap-6 justify-between bg-white/40 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-gray-200'>
-                <ImageInput setConvertedUrl={setConvertedUrl} setLoading={setLoading} loading={loading} />
+        className='mx-auto w-full px-4 md:px-8 mt-28 flex flex-col md:flex-row gap-y-8 md:gap-6 justify-between bg-white/40 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-gray-200'>
+                <div className='absolute top-0 left-0 w-full rounded-xxl p-1'>
+                  {progress > 0 && <ProgressBar progress={progress} />}
+                </div>
+                
+                <ImageInput setConvertedUrl={setConvertedUrl} setLoading={setLoading} loading={loading} setProgress={setProgress} />
                 <ImageOutput  convertedUrl={convertedUrl} loading={loading} />
         </div>
     </section>

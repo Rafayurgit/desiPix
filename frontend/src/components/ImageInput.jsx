@@ -21,7 +21,7 @@ const formatOptions = [
   "jpeg", "png", "webp", "gif", "bmp", "tiff", "heic", "avif", "svg", "ico"
 ];
 
-export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
+export default function ImageInput({ setConvertedUrl , setLoading, loading , setProgress}) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [targetFormat, setTargetFormat] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -95,6 +95,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
     ) {
       setFeedback({ warn: "You are trying to convert the file to the same format", error: "" });
       setLoading(false);
+      
       return;
     }
 
@@ -105,6 +106,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
     ) {
       setFeedback({ warn: "This file has already been converted to this format.", error: "" });
       setLoading(false);
+      
       return;
     }
 
@@ -112,17 +114,26 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
     formData.append("Image", selectedFile);
     formData.append("Format", targetFormat);
     setLoading(true);
+    
 
     try {
       const response = await axios.post(
         "http://localhost:8080/upload",
         formData,
-        { responseType: "blob", timeout: 120000 }
+        { responseType: "blob", timeout: 120000,
+          onUploadProgress: (event)=>{
+            if(event.total){
+              const percent= Math.round((event.loaded * 100)/event.total)
+              setProgress(Math.min(percent,90));
+            }
+          }
+         }
       );
       const blob = new Blob([response.data], {
         type: response.headers["content-type"]
       });
       console.log(blob);
+      setProgress(95);
       
       const outputName = response.headers["x-converted-filename"] || selectedFile.name.replace(/\.[^.]+$/, '.' + targetFormat);
       setConvertedUrl({url: URL.createObjectURL(blob), name:outputName});
@@ -131,6 +142,10 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading }) {
       setFeedback({ warn: "", error: "Failed to convert image" });
     }
     setLoading(false);
+    setProgress(100);
+    setTimeout(() => {
+      setProgress(0);
+    }, 1000);
   };
 
   
