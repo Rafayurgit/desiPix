@@ -1,21 +1,9 @@
 import React, { useState, useMemo, useCallback } from "react";
 import axios from "axios";
-import ComponentLoader from "./componentLoader";
 import { useDropzone } from "react-dropzone";
 import heicPreview from "../assets/heicPreview.png"
-
+import { getExtension, isAcceptedFormat, generateSignature } from "../utils/imageHelpers";
 // Helper functions
-const getExtension = filename =>
-  filename ? filename.split(".").pop().toLowerCase() : "";
-
-const isAcceptedFormat = ext =>
-  [
-    "jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff",
-    "heic", "avif", "svg", "ico"
-  ].includes(ext);
-
-const generateSignature = file =>
-  file ? `${file.name}_${file.size}_${file.lastModified};` : "";
 
 const formatOptions = [
   "jpeg", "png", "webp", "gif", "bmp", "tiff", "heic", "avif", "svg", "ico"
