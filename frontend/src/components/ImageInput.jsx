@@ -61,6 +61,7 @@ export default function ImageInput({ setConvertedUrl , setLoading, loading , set
     setLastConversion({ signature: "", format: "" });
   };
 
+  
   // Choose format
   const handleFormatChange = e => setTargetFormat(e.target.value);
 
