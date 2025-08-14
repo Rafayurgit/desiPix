@@ -79,16 +79,11 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
 
     },inputPath, outputFormat)
 
-    
   }
 
   if(canUseImageMagick(detectedInputFormat, outputFormat)){
     return await convertWithLogging("ImageMagic", convertWithImageMagick, inputPath, outputFormat)
   }
-
-  
-
-  
 
   if(isAnimatedFormat(detectedInputFormat)){
     return await convertAnimatedFormat(inputPath, outputFormat);

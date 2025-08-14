@@ -3,7 +3,6 @@ import util from "util";
 import path from "path";
 import { log } from "console";
 
-
 const execAsync = util.promisify(exec);
 
 export function canUseImageMagick(inputFormat, outputFormat) {

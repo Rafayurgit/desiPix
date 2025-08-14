@@ -32,6 +32,7 @@ export const convertHEIC = async (inputPath, targetFormat) => {
     });
     const outputPath = inputPath + '.' + format;
     await fs.writeFile(outputPath, outputBuffer);
+    
     return outputPath;
   } catch (err) {
     console.error('Error during HEIC conversion:', err);
