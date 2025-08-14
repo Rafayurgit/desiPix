@@ -104,6 +104,9 @@ export const convertImageController = async (req, res) => {
         absoluteOutputPath,
         (e) => e && console.error("Failed deleting converted file:", e)
       );
+      processedImages.delete(uniqueKey);
+      console.log(`Removed ${uniqueKey} from processedImages cache.`);
+      
     });
 
     stream.pipe(res);
