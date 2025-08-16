@@ -11,7 +11,10 @@ export default function ImageOutput({ convertedUrl , loading}) {
       {!convertedUrl ? (
         <div className="text-gray-500">
           Your converted image will appear here after processing.
-          {loading && <ComponentLoader />}
+          <div className="flex justify-center items-center">
+            {loading && <ComponentLoader />}
+          </div>
+          
         </div>
       ) : (
         <>

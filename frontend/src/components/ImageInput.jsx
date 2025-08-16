@@ -113,6 +113,7 @@ export default function ImageInput({
         error: "",
       });
       setLoading(false);
+      
 
       return;
     }
@@ -131,12 +132,14 @@ export default function ImageInput({
       return;
     }
 
+    setConvertedUrl("");
     const formData = new FormData();
     formData.append("Image", selectedFile);
     formData.append("Format", targetFormat);
     setLoading(true);
 
     try {
+      
       const response = await axios.post(
         "http://localhost:8080/upload",
         formData,
@@ -174,6 +177,7 @@ export default function ImageInput({
     }
     setLoading(false);
     setProgress(100);
+    
     setTimeout(() => {
       setProgress(0);
     }, 1000);
