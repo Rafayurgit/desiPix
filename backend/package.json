@@ -19,6 +19,7 @@
     "express": "^5.1.0",
     "file-type": "^21.0.0",
     "heic-convert": "^2.1.0",
+    "icojs": "^0.19.5",
     "ioredis": "^5.7.0",
     "mime-types": "^3.0.1",
     "multer": "^2.0.1",
