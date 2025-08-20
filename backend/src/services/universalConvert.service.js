@@ -95,6 +95,19 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     return outPath;
   }
 
+  // AVIF special case
+if (outputFormat === "avif" && ["png", "jpeg", "jpg"].includes(detectedInputFormat)) {
+  const outPath = inputPath + ".avif";
+  try {
+    await sharp(inputPath).toFormat("avif", { quality: 50 }).toFile(outPath);
+    return outPath;
+  } catch (err) {
+    console.warn("Sharp AVIF failed, falling back to ImageMagick:", err.message);
+    return await convertWithImageMagick(inputPath, "avif");
+  }
+}
+
+
   if (
     ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
     outputFormat === "svg"

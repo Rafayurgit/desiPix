@@ -3,6 +3,7 @@ import util from "util";
 import path from "path";
 import { log } from "console";
 
+
 const execAsync = util.promisify(exec);
 
 export function canUseImageMagick(inputFormat, outputFormat) {
@@ -14,26 +15,24 @@ export function canUseImageMagick(inputFormat, outputFormat) {
 }
 
 export async function convertWithImageMagick(inputPath, outputFormat) {
-  const outputPath = inputPath + "." + outputFormat;
-  let command;
-  
-  if (outputFormat === 'ico') {
-    // ICO: supports multi-res
-    command = `magick "${inputPath}" -resize 256x256 -define icon:auto-resize=256,128,64,48,32,16 "${outputPath}"`;
-  } else {
-    command = `magick convert "${inputPath}" -quality 85 "${outputPath}"`;
-  }
+  const normalizedInputPath = path.resolve(inputPath);
+  const outputPath = normalizedInputPath + "." + outputFormat;
+  const normalizedOutputPath = path.resolve(outputPath);
 
-  // const command = `magick convert "${inputPath}" "${outputPath}"`;
-  // const command = `magick convert "${inputPath}" -quality 85 "${outputPath}"`;
+  let command;
+  if (outputFormat === 'ico') {
+    command = `magick "${normalizedInputPath}" -resize 256x256 -define icon:auto-resize=256,128,64,48,32,16 "${normalizedOutputPath}"`;
+  } else {
+    command = `magick "${normalizedInputPath}" -quality 85 "${normalizedOutputPath}"`;
+  }
 
   try {
     const { stdout, stderr } = await execAsync(command);
-    if(stderr) console.log("ImageMagick stderr:", stderr);
-    return outputPath
-    
+    if (stderr) console.log("ImageMagick stderr:", stderr);
+    return normalizedOutputPath;
   } catch (error) {
-    console.log("ImageMagic command failed:", error);
+    console.log("ImageMagick command failed:", error);
     throw error;
   }
 }
+
