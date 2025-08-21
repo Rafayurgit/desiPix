@@ -3,6 +3,7 @@ import crypto from "crypto";
 import path from "path";
 import { universalConvert } from "../services/universalConvert.service.js";
 import mime from "mime-types";
+import { safeUnlink } from "../utils/fileUtils.js";  // <-- import utility
 
 const processedImages = new Set(); // Persist across requests
 
@@ -28,13 +29,11 @@ export const convertImageController = async (req, res) => {
     Format.toLowerCase() === "jpg" ? "jpeg" : Format.toLowerCase();
 
   if (normOriginalExt === normFormat) {
-    fs.unlink(file.path, () => {});
-    return res
-      .status(400)
-      .json({
-        message:
-          "Source and target format are the same. Choose a different format.",
-      });
+    safeUnlink(file.path, "uploaded file");
+    return res.status(400).json({
+      message:
+        "Source and target format are the same. Choose a different format.",
+    });
   }
 
   try {
@@ -42,7 +41,7 @@ export const convertImageController = async (req, res) => {
     const uniqueKey = `${fileHash}_${normFormat}`;
 
     if (processedImages.has(uniqueKey)) {
-      fs.unlinkSync(file.path);
+      safeUnlink(file.path, "uploaded file");
       return res
         .status(409)
         .json({ message: "Image already converted to this format." });
@@ -82,7 +81,7 @@ export const convertImageController = async (req, res) => {
       path: absoluteOutputPath,
       size: convertedStat.size,
       mimetype: mimeType,
-      encoding: "N/A", // Not applicable, unless you're tracking it
+      encoding: "N/A",
       destination: path.dirname(absoluteOutputPath),
       filename: path.basename(absoluteOutputPath),
     };
@@ -96,23 +95,23 @@ export const convertImageController = async (req, res) => {
     res.setHeader("Content-Type", mimeType);
 
     res.on("finish", () => {
-      fs.unlink(
-        file.path,
-        (e) => e && console.error("Failed deleting uploaded file:", e)
-      );
-      fs.unlink(
-        absoluteOutputPath,
-        (e) => e && console.error("Failed deleting converted file:", e)
-      );
+      safeUnlink(file.path, "uploaded file");
+      safeUnlink(absoluteOutputPath, "converted file");
       processedImages.delete(uniqueKey);
-      console.log(`Removed ${uniqueKey} from processedImages cache.`);
-      
+      console.log(`🧹 Cleanup after finished request for ${uniqueKey}`);
+    });
+
+    res.on("close", () => {
+      safeUnlink(file.path, "uploaded file");
+      safeUnlink(absoluteOutputPath, "converted file");
+      processedImages.delete(uniqueKey);
+      console.log(`🧹 Cleanup after aborted request for ${uniqueKey}`);
     });
 
     stream.pipe(res);
   } catch (error) {
     console.error("Conversion failed error details:", error);
-    fs.unlink(file?.path, () => {});
+    safeUnlink(file?.path, "uploaded file");
     res
       .status(500)
       .json({ message: "Failed to convert image", error: error.message });
