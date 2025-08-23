@@ -10,7 +10,6 @@ export default function ComponentLoader() {
             <Lottie animationData={trailLoading} loop={true} />
         </div>
     
-      
       Jugaad chalu hai bhai...
     </div>
   )

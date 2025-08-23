@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import heicPreview from "../assets/heicPreview.png";
+import { uploadAndConvert } from "../services/apiService";
 import {
   getExtension,
   isAcceptedFormat,
@@ -113,7 +114,6 @@ export default function ImageInput({
         error: "",
       });
       setLoading(false);
-      
 
       return;
     }
@@ -133,39 +133,59 @@ export default function ImageInput({
     }
 
     setConvertedUrl("");
-    const formData = new FormData();
-    formData.append("Image", selectedFile);
-    formData.append("Format", targetFormat);
     setLoading(true);
 
-    try {
-      
-      const response = await axios.post(
-        "http://localhost:8080/upload",
-        formData,
-        {
-          responseType: "blob",
-          timeout: 120000,
-          onUploadProgress: (event) => {
-            if (event.total) {
-              const percent = Math.round((event.loaded * 100) / event.total);
-              setProgress(Math.min(percent, 90));
-            }
-          },
-        }
-      );
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
-      });
-      console.log(blob);
-      setProgress(95);
+    // try {
 
-      const outputName =
-        response.headers["x-converted-filename"] ||
-        selectedFile.name.replace(/\.[^.]+$/, "." + targetFormat);
-      setConvertedUrl({ url: URL.createObjectURL(blob), name: outputName });
-      setLastConversion({ signature: currSig, format: targetFormat });
-    } catch (e) {
+    //   const response = await axios.post(
+    //     "http://localhost:8080/upload",
+    //     formData,
+    //     {
+    //       responseType: "blob",
+    //       timeout: 120000,
+    //       onUploadProgress: (event) => {
+    //         if (event.total) {
+    //           const percent = Math.round((event.loaded * 100) / event.total);
+    //           setProgress(Math.min(percent, 90));
+    //         }
+    //       },
+    //     }
+    //   );
+    //   const blob = new Blob([response.data], {
+    //     type: response.headers["content-type"],
+    //   });
+    //   console.log(blob);
+    //   setProgress(95);
+
+    //   const outputName =
+    //     response.headers["x-converted-filename"] ||
+    //     selectedFile.name.replace(/\.[^.]+$/, "." + targetFormat);
+    //   setConvertedUrl({ url: URL.createObjectURL(blob), name: outputName });
+    //   setLastConversion({ signature: currSig, format: targetFormat });
+    // } catch (e) {
+    //   if (axios.isAxiosError(e) && e.response?.status === 409) {
+    //     setFeedback({
+    //       warn: "This image has already been converted to this format earlier. Reset or choose another format.",
+    //       error: "",
+    //     });
+    //   } else {
+    //     setFeedback({ warn: "", error: "Failed to convert image" });
+    //   }
+    // }
+
+    try {
+      const { blob, filename } = await uploadAndConvert(
+        selectedFile,
+        targetFormat,
+        (p) => setProgress(Math.min(p, 90))
+      );
+
+      setConvertedUrl({ url: URL.createObjectURL(blob), name: filename });
+      setLastConversion({
+        signature: generateSignature(selectedFile),
+        format: targetFormat,
+      });
+    } catch (error) {
       if (axios.isAxiosError(e) && e.response?.status === 409) {
         setFeedback({
           warn: "This image has already been converted to this format earlier. Reset or choose another format.",
@@ -175,9 +195,10 @@ export default function ImageInput({
         setFeedback({ warn: "", error: "Failed to convert image" });
       }
     }
+
     setLoading(false);
     setProgress(100);
-    
+
     setTimeout(() => {
       setProgress(0);
     }, 1000);
