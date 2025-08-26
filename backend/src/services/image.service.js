@@ -1,70 +1,63 @@
-import sharp from "sharp";
-import path from "path";
+// services/image.service.js
 import fs from "fs";
-import { convertHEIC } from "./heic.service.js";
+import crypto from "crypto";
+import path from "path";
+import mime from "mime-types";
+import { safeUnlink } from "../utils/fileUtils.js";
+import { universalConvert } from "../services/universalConvert.service.js";
 
 
-// export const convertImageFormat = async (inputPath, targetFormat) => {
-//   const ext = inputPath.split(".").pop().toLowerCase();
-//   const supportedSharpFormats = Object.keys(sharp.format).filter(
-//     (key) => sharp.format[key].output === true
-//   );
+const processedImages = new Set();
 
-//   if (ext === "heic" || ext === "heif") {
-//     // Delegate HEIC/HEIF to ImageMagick
-//     return await convertHEIC(inputPath, targetFormat);
-//   }
+const getFileHash = (filepath) => {
+  const fileBuffer = fs.readFileSync(filepath);
+  return crypto.createHash("sha256").update(fileBuffer).digest("hex");
+};
 
-//   if (!supportedSharpFormats.includes(targetFormat)) {
-//     throw new Error(`Unsupported format for conversion: ${targetFormat}`);
-//   }
+export const imageService = {
+  async convert(file, format) {
+    const originalExt = file.originalname.split(".").pop().toLowerCase();
+    const normOriginalExt = originalExt === "jpg" ? "jpeg" : originalExt;
+    const normFormat = format.toLowerCase() === "jpg" ? "jpeg" : format.toLowerCase();
 
-//   const outputPath = inputPath + "." + targetFormat;
-//   await sharp(inputPath).toFormat(targetFormat).toFile(outputPath);
-//   return outputPath;
-// };
+    if (normOriginalExt === normFormat) {
+      safeUnlink(file.path, "uploaded file");
+      throw new Error("Source and target format are the same. Choose a different format.");
+    }
 
+    const fileHash = getFileHash(file.path);
+    const uniqueKey = `${fileHash}_${normFormat}`;
 
-// export const convertImageFormat = async (inputPath, targetFormat)=>{
-//     console.log("Supported formats:", sharp.format);
-//     const ext = inputPath.split(".").pop().toLowerCase();
-//     if (ext === "heic" || ext === "heif") {
-//     return await convertHEIC(inputPath, targetFormat);
-//   }
+    if (processedImages.has(uniqueKey)) {
+      safeUnlink(file.path, "uploaded file");
+      throw new Error("Image already converted to this format.");
+    }
 
-//     const outputPath = inputPath+"."+targetFormat;
+    const outputPath = await universalConvert(file.path, normFormat);
+    const absoluteOutputPath = path.resolve(outputPath);
 
-//     await sharp(inputPath).toFormat(targetFormat).toFile(outputPath);
-//     return outputPath;
-// }
+    if (!fs.existsSync(absoluteOutputPath)) {
+      throw new Error("Conversion failed: output file not found.");
+    }
 
-console.log("Sharp supported output formats:", Object.entries(sharp.format).filter(([key,val]) => val.output).map(([key]) => key));
+    processedImages.add(uniqueKey);
 
-export const convertImageFormat = async (inputPath, targetFormat, inputExt) => {
-  const format = targetFormat.toLowerCase();
-  console.log("Normalized format:", format);
+    const mimeType = mime.lookup(normFormat) || "application/octet-stream";
+    const stream = fs.createReadStream(absoluteOutputPath);
 
-  if(format === 'jpg'){
-    format = 'jpeg'
-  }
+    return {
+      stream,
+      mimeType,
+      uniqueKey,
+      filePath: file.path,
+      outputPath: absoluteOutputPath,
+    };
+  },
 
-  // const ext = inputPath.split(".").pop().toLowerCase();
-  const ext = inputExt.toLowerCase();
-  console.log("Input file extension:", ext);
-
-  const supportedSharpFormats = Object.keys(sharp.format).filter(
-    (key) => sharp.format[key].output === true
-  );
-
-  if (ext === "heic" || ext === "heif") {
-    return await convertHEIC(inputPath, format);
-  }
-
-  if (!supportedSharpFormats.includes(format)) {
-    throw new Error(`Unsupported format for conversion: ${format}`);
-  }
-
-  const outputPath = inputPath + "." + format;
-  await sharp(inputPath).toFormat(format).toFile(outputPath);
-  return outputPath;
+  cleanup(filePath, outputPath, uniqueKey, reason) {
+    safeUnlink(filePath, "uploaded file");
+    safeUnlink(outputPath, "converted file");
+    processedImages.delete(uniqueKey);
+    console.log(`🧹 Cleanup after ${reason} request for ${uniqueKey}`);
+  },
 };
