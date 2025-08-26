@@ -29,9 +29,9 @@ export default function ImageInput({
   loading,
   setProgress,
 }) {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState([]);
   const [targetFormat, setTargetFormat] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState([]);
   const [feedback, setFeedback] = useState({ warn: "", error: "" });
   const [lastConversion, setLastConversion] = useState({
     signature: "",
@@ -41,6 +41,7 @@ export default function ImageInput({
   // All file-selection logic in one callback
   const onFileSelected = useCallback((file) => {
     const ext = getExtension(file.name);
+
     if (!isAcceptedFormat(ext)) {
       setFeedback({
         warn: "Unsupported file format, select correct format",
@@ -63,31 +64,56 @@ export default function ImageInput({
   // For dropzone and manual input—NO duplicate logic!
   const handleDrop = useCallback(
     (acceptedFiles) => {
-      if (acceptedFiles[0]) onFileSelected(acceptedFiles[0]);
+      const validFiles=[];
+      const preViews=[];
+
+      acceptedFiles.forEach((file)=>{
+        const ext=getExtension(file.name);
+        
+        if(isAcceptedFormat(ext)){
+          validFiles.push(file);
+          preViews.push(ext === "heic" || ext === "heif" ? heicPreview : URL.createObjectURL(file))
+        }
+      })
+
+      // if (acceptedFiles[0]) onFileSelected(acceptedFiles[0]);
+
+      setSelectedFile(validFiles);
+      setPreviewUrl(preViews);
+      setFeedback({warn:"", error:""})
     },
     [onFileSelected]
   );
 
   const handleInputChange = (e) => {
-    if (e.target.files[0]) onFileSelected(e.target.files[0]);
+    handleDrop([...e.target.files]);
+    // if (e.target.files[0]) onFileSelected(e.target.files[0]);
   };
 
   // Dropzone config
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "image/*": [] },
-    maxFiles: 1,
+    multiple: true,
     onDrop: handleDrop,
   });
 
   // Reset everything
   const handleReset = () => {
-    setSelectedFile(null);
-    setPreviewUrl("");
+    setSelectedFile([]);
+    setPreviewUrl([]);
     setTargetFormat("");
     setFeedback({ warn: "", error: "" });
     setConvertedUrl("");
     setLastConversion({ signature: "", format: "" });
   };
+
+  const handleRemoveFile = (index)=>{
+    const updatedFiles    = selectedFile.filter((_, i)=> i !== index);
+    const updatedPreviews = previewUrl.filter((_, i)=> i !== index); 
+
+    setSelectedFile(updatedFiles);
+    setPreviewUrl(updatedPreviews);
+  }
 
   // Choose format
   const handleFormatChange = (e) => setTargetFormat(e.target.value);
@@ -97,14 +123,30 @@ export default function ImageInput({
     setFeedback({ warn: "", error: "" });
     setLoading(true);
 
-    if (!selectedFile || !targetFormat) {
+    if (!selectedFile.length || !targetFormat) {
       setFeedback({ warn: "Select the format first", error: "" });
       setLoading(false);
       return;
     }
 
-    const ext = getExtension(selectedFile.name);
-    if (
+    
+    for(const file of selectedFile){
+      const ext = getExtension(file.name);
+
+      if (
+    ext === targetFormat.toLowerCase() ||
+    (ext === "jpg" && targetFormat === "jpeg") ||
+    (ext === "jpeg" && targetFormat === "jpg")
+  ) {
+    setFeedback({
+      warn: `You are trying to convert "${file.name}" to the same format`,
+      error: "",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (
       ext === targetFormat.toLowerCase() ||
       (ext === "jpg" && targetFormat === "jpeg") ||
       (ext === "jpeg" && targetFormat === "jpg")
@@ -117,6 +159,10 @@ export default function ImageInput({
 
       return;
     }
+
+    }
+
+    
 
     const currSig = generateSignature(selectedFile);
     if (
@@ -173,19 +219,50 @@ export default function ImageInput({
     //   }
     // }
 
-    try {
-      const { blob, filename } = await uploadAndConvert(
-        selectedFile,
-        targetFormat,
-        (p) => setProgress(Math.min(p, 90))
-      );
+    // try {
+    //   const { blob, filename } = await uploadAndConvert(
+    //     selectedFile,
+    //     targetFormat,
+    //     (p) => setProgress(Math.min(p, 70))
+    //   );
 
-      setConvertedUrl({ url: URL.createObjectURL(blob), name: filename });
-      setLastConversion({
-        signature: generateSignature(selectedFile),
-        format: targetFormat,
-      });
-    } catch (error) {
+    //   setConvertedUrl({ url: URL.createObjectURL(blob), name: filename });
+    //   setLastConversion({
+    //     signature: generateSignature(selectedFile),
+    //     format: targetFormat,
+    //   });
+    // } 
+    // try{
+    //   const result = await Promise.all(
+    //     selectedFile.map((file)=>
+    //     uploadAndConvert(file, targetFormat, (p)=> setProgress(Math.min(p,70)))
+    //     )
+    //   )
+
+    //   setConvertedUrl(
+    //     result.map(({blob, filename})=>({
+    //       url: URL.createObjectURL(blob),
+    //       name: filename,
+    //     }))
+    //   )
+    // }
+
+    try{
+      const data = await uploadAndConvert(selectedFile, targetFormat, (p)=> setProgress(Math.min(p,70)));
+      // if(data.success){
+      //   setConvertedUrl(data.files);
+      // }
+      if (data.success) {
+    const backendUrl = "http://localhost:8080"; // 👈 your backend URL
+    setConvertedUrl(
+      data.files.map((f) => ({
+        ...f,
+        url: `${backendUrl}${f.url}`, // 👈 prefix with backend
+      }))
+    );
+  }
+    }
+    catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 409) {
         setFeedback({
           warn: "This image has already been converted to this format earlier. Reset or choose another format.",
@@ -232,14 +309,29 @@ export default function ImageInput({
     >
       <h1 className="text-xl font-semibold mb-4">Upload Image</h1>
 
-      {previewUrl ? (
+      {previewUrl.length > 0  ? (
         <>
-          <img
-            src={previewUrl}
-            alt={selectedFile?.name || "preview"}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          {previewUrl.map((url,idx)=>(
+            <div key={idx} className="border p-2 bg-white rounded">
+              <div className="relative border p-2 bg-white rounded">
+                <button onClick={()=>handleRemoveFile(idx)}
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600"
+        title="Remove image"
+                >
+                  ✕
+                </button>
+              </div>
+              <img
+            src={url}
+            alt={selectedFile[idx]?.name || "preview"}
             className="w-full h-64 object-contain border rounded bg-white mb-2"
           />
-          {selectedFile?.name}
+          <p className="text-sm truncate">{selectedFile[idx]?.name}</p>
+            </div>
+            
+          ))}
+        </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 p-5 justify-between items-stretch w-full">
             <div className="w-full sm:flex-1 min-w-[150px]">
               {formatDropdown}
@@ -274,7 +366,8 @@ export default function ImageInput({
             <input
               {...getInputProps()}
               type="file"
-              name="image"
+              name="images"
+              multiple
               onChange={handleInputChange}
               accept="image/*, .heic"
               className="hidden"

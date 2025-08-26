@@ -7,7 +7,7 @@ import { useState } from 'react';
 import ProgressBar from '../common/ProgressBar';
 export default function HeroSection() {
 
-const [convertedUrl, setConvertedUrl] = useState("");
+const [convertedUrl, setConvertedUrl] = useState([]);
 const [loading, setLoading] = useState("");
 const [progress, setProgress] = useState(0);
 const converterSectionRef = useRef(null);
