@@ -5,6 +5,6 @@ import {    convertImageController } from "../controller/image.controller.js"
 const router= express.Router();
 
 const upload = multer({dest: "uploads/"});
-router.post("/", upload.single("Image"), convertImageController);
+router.post("/", upload.array("Image"), convertImageController);
 
 export default router;
