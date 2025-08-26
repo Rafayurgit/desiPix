@@ -13,6 +13,7 @@ import { convertWithLogging } from "../utils/convertLogger.js";
 import { rasterToSvg } from "../utils/rasterToSvg.js";
 import { convertToIco } from "./ico.service.js";
 import { robustIcoConvert } from "./robustIcoConvert.js";
+import { convertAnimatedFormat } from "./animated.service.js";
 
 export async function universalConvert(inputPath, requestedOutputFormat) {
   let fileType = await fileTypeFromFile(inputPath);
@@ -28,10 +29,10 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
   if (detectedInputFormat === "jpg") detectedInputFormat = "jpeg";
   if (detectedInputFormat === "tif") detectedInputFormat = "tiff";
 
-   if (detectedInputFormat === "ico" && outputFormat !== "ico") {
+  if (detectedInputFormat === "ico" && outputFormat !== "ico") {
     return await robustIcoConvert(inputPath, outputFormat);
   }
-  
+
   // 2. ICO as OUTPUT (never direct ImageMagick):
   if (outputFormat === "ico") {
     return await convertToIco(inputPath);
@@ -46,8 +47,6 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
         outputFormat
       );
     }
-
-    
 
     // HEIC fallback: heic -> png -> desired format
     let tempPNG = await convertHEIC(inputPath, "png");
@@ -74,39 +73,37 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     //   return icoPath;
     // }
 
-   
-
-    
-
-
-
     try {
       await sharp(tempPNG).toFormat(outputFormat).toFile(outPath);
     } finally {
       try {
         await fs.unlink(tempPNG);
       } catch (error) {
-        console.error("Failed to delete temp PNG file:", err);
+        console.error("Failed to delete temp PNG file:", error);
       }
       // Clean up temp PNG file
     }
 
-    
     return outPath;
   }
 
   // AVIF special case
-if (outputFormat === "avif" && ["png", "jpeg", "jpg"].includes(detectedInputFormat)) {
-  const outPath = inputPath + ".avif";
-  try {
-    await sharp(inputPath).toFormat("avif", { quality: 50 }).toFile(outPath);
-    return outPath;
-  } catch (err) {
-    console.warn("Sharp AVIF failed, falling back to ImageMagick:", err.message);
-    return await convertWithImageMagick(inputPath, "avif");
+  if (
+    outputFormat === "avif" &&
+    ["png", "jpeg", "jpg"].includes(detectedInputFormat)
+  ) {
+    const outPath = inputPath + ".avif";
+    try {
+      await sharp(inputPath).toFormat("avif", { quality: 50 }).toFile(outPath);
+      return outPath;
+    } catch (err) {
+      console.warn(
+        "Sharp AVIF failed, falling back to ImageMagick:",
+        err.message
+      );
+      return await convertWithImageMagick(inputPath, "avif");
+    }
   }
-}
-
 
   if (
     ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
