@@ -3,6 +3,8 @@ import path from "path";
 import crypto from "crypto";
 import { error } from "console";
 
+
+
 const storage = multer.diskStorage({
     destination:(req, file, cb)=>{
         cb(null, path.resolve("uploads"))
@@ -15,6 +17,10 @@ const storage = multer.diskStorage({
 })
 
 const fileFilter= (req, file, cb )=>{
+    console.log("Multer files:", req.files);
+console.log("Format body:", req.body.Format);
+    console.log("File received by Multer:", file);
+
     const ext = path.extname(file.originalname).toLowerCase().slice(1); // "png", "jpg", etc.
     const mime = file.mimetype;
     if (!acceptedFormats.includes(ext) || !mime.startsWith("image/")) {
