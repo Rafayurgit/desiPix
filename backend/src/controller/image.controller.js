@@ -146,6 +146,7 @@ export const convertImageController = async (req, res) => {
         url,
         format,
         originalName,
+        name: originalName.replace(/\.[^.]+$/,`.${format}`),
         size,
         error,
       })),
