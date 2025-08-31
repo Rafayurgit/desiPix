@@ -316,7 +316,7 @@ export default function ImageInput({
             <div key={idx} className="border p-2 bg-white rounded">
               <div className="relative border p-2 bg-white rounded">
                 <button onClick={()=>handleRemoveFile(idx)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
         title="Remove image"
                 >
                   ✕
@@ -328,6 +328,9 @@ export default function ImageInput({
             className="w-full h-64 object-contain border rounded bg-white mb-2"
           />
           <p className="text-sm truncate">{selectedFile[idx]?.name}</p>
+          {url.error && (
+                  <p className="text-red-500">Error: {url.error}</p>
+                )}
             </div>
             
           ))}
