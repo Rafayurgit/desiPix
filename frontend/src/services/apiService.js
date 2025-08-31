@@ -9,8 +9,6 @@ export async function uploadAndConvert(files, targetFormat, onProgress) {
   }
   formData.append("Format", targetFormat);
 
-
-
   const response = await axios.post("http://localhost:8080/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
     responseType: "json",
@@ -29,6 +27,7 @@ export async function uploadAndConvert(files, targetFormat, onProgress) {
 //       response.headers["x-converted-filename"] ||
 //       file.name.replace(/\.[^.]+$/, "." + targetFormat),
 //   };
-
+  console.log(response.data);
+  
   return response.data;
 }
