@@ -2,6 +2,30 @@ import React from "react";
 import ComponentLoader from "./componentLoader";
 
 export default function ImageOutput({ convertedUrl, loading }) {
+
+  const handleDownload = async (url, filename) => {
+  if (!url || url === "null") {
+    alert("Invalid download URL");
+    return;
+  }
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Download failed");
+    const blob = await response.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  } catch (error) {
+    alert("Failed to download file");
+    console.error(error);
+  }
+};
+
+
   return (
     <div className="w-full md:w-1/2 bg-gray-100 p-6 rounded-lg shadow-lg ">
       <h2 className="text-xl font-semibold mb-4">Converted Image</h2>
@@ -16,7 +40,7 @@ export default function ImageOutput({ convertedUrl, loading }) {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4">
-            {convertedUrl.map((file, idx) => (
+            {/* {convertedUrl.map((file, idx) => (
               // <>
               //   <div key={file.name} className="border p-2 bg-white rounded">
               //     <img
@@ -38,24 +62,59 @@ export default function ImageOutput({ convertedUrl, loading }) {
               //     </a>
               //   </div>
               // </>
-              <div key={file.name} className="border p-2 bg-white rounded">
+              <div
+                key={file.id || file.url}
+                className="border p-2 bg-white rounded"
+              >
                 <img
                   src={file.url}
                   alt="Converted"
                   className="w-full h-64 object-contain border rounded bg-white mb-2"
                 />
                 <p>{file?.name}</p>
+                {file.error && (
+                  <p className="text-red-500">Error: {file.error}</p>
+                )}
                 <div className="flex justify-center m-3">
                   <a
                     href={file.url}
-                    download={file.name}
+                    download={file.name || file.originalName}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow-md"
                   >
                     Download
                   </a>
+
+                  <button
+                    onClick={() => handleDownload(file.url, file.name)}
+                    className="bg-green-600 hover:bg-green-700 cursor-pointer text-white px-6 py-2 rounded shadow-md"
+                  >
+                    Download
+                  </button>
                 </div>
               </div>
-            ))}
+            ))} */}
+
+           {convertedUrl
+  .filter(file => file.url && file.url !== "null")
+  .map((file, idx) => (
+    <div key={file.url || file.name || idx} className="border p-2 bg-white rounded">
+      <img src={file.url} alt={file.name || "Converted"} className="w-full h-64 object-contain border rounded bg-white mb-2" />
+      <p>{file.name}</p>
+      {file.error && (
+        <p className="text-red-500">Warning: {file.error}</p>
+      )}
+      <div className="flex justify-center m-3">
+        <button
+          onClick={() => handleDownload(file.url, file.name)}
+          className="bg-green-600 hover:bg-green-700 cursor-pointer text-white px-6 py-2 rounded shadow-md"
+        >
+          Download
+        </button>
+      </div>
+    </div>
+  ))}
+
+
           </div>
         </>
       )}
