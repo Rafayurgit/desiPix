@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import heicPreview from "../assets/heicPreview.png";
+import tiffPreview from "../assets/tiffPreview.png"
 import { uploadAndConvert } from "../services/apiService";
 import {
   getExtension,
@@ -53,6 +54,8 @@ export default function ImageInput({
     }
     if (ext === "heic" || ext === "heif") {
       setPreviewUrl(heicPreview);
+    } else if (ext === "tiff" || ext === "tif"){
+      setPreviewUrl(tiffPreview);
     } else {
       setPreviewUrl(URL.createObjectURL(file));
     }
@@ -72,8 +75,16 @@ export default function ImageInput({
         
         if(isAcceptedFormat(ext)){
           validFiles.push(file);
-          preViews.push(ext === "heic" || ext === "heif" ? heicPreview : URL.createObjectURL(file))
+
+          if (ext === "heic" || ext === "heif") {
+      preViews.push(heicPreview);
+    } else if (ext === "tiff" || ext === "tif") {
+      preViews.push(tiffPreview);
+    } else {
+      preViews.push(URL.createObjectURL(file));
+    }
         }
+        
       })
 
       // if (acceptedFiles[0]) onFileSelected(acceptedFiles[0]);
