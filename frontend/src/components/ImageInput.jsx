@@ -322,12 +322,12 @@ export default function ImageInput({
 
       {previewUrl.length > 0  ? (
         <>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className={`max-h-96 overflow-y-auto gap-4 mb-4 ${previewUrl.length > 4 ? "grid grid-cols-3" : "grid grid-cols-2"}`}>
           {previewUrl.map((url,idx)=>(
             <div key={idx} className="border p-2 bg-white rounded">
               <div className="relative border p-2 bg-white rounded">
                 <button onClick={()=>handleRemoveFile(idx)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
+                className="absolute top-1 right-1 bg-indigo-900 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
         title="Remove image"
                 >
                   ✕
@@ -356,7 +356,7 @@ export default function ImageInput({
     ${
       !selectedFile || !targetFormat || loading
         ? "bg-gray-400 cursor-not-allowed"
-        : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+        : "bg-indigo-900 hover:bg-indigo-700 cursor-pointer"
     }`}
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat || loading}
