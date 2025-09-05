@@ -21,7 +21,7 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section className="w-full bg-gray-50 py-16 px-4 md:px-8">
+    <section className="mt-5 w-full py-16 px-4 md:px-8 bg-white/40 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-gray-200">
       <div className="container mx-auto max-w-6xl text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-12">
           Powerful Tools at Your Fingertips

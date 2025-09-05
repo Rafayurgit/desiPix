@@ -21,7 +21,7 @@ const handleScrollToConverter  = () => {
 
 
   return (
-    <section className="w-full pt-10 md:pt-16 bg-gradient-to-br from-indigo-50 to-white px-4">
+    <section className="heroSection w-full pt-10 md:pt-16  px-4">
 
         <div className="container mx-auto px-4 flex flex-col-reverse md:flex-row items-center gap-10">
 
