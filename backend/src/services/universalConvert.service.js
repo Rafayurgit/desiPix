@@ -106,6 +106,15 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
   }
 
   if (
+    detectedInputFormat === "avif" &&
+    ["png", "jpeg"].includes(outputFormat)
+  ) {
+    let outPath = inputPath + "." + outputFormat;
+    await sharp(inputPath).toFormat(outputFormat).toFile(outPath);
+    return outPath;
+  }
+
+  if (
     ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
     outputFormat === "svg"
   ) {
