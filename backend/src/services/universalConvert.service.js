@@ -113,6 +113,33 @@ export async function universalConvert(inputPath, requestedOutputFormat) {
     await sharp(inputPath).toFormat(outputFormat).toFile(outPath);
     return outPath;
   }
+  // AVIF -> HEIC (requires ImageMagick with libheif support)
+// if (detectedInputFormat === "avif" && outputFormat === "heic") {
+//   return await convertWithLogging(
+//     "ImageMagick",
+//     convertWithImageMagick,
+//     inputPath,
+//     outputFormat
+//   );
+// }
+if (detectedInputFormat === "avif" && outputFormat === "heic") {
+  try {
+    return await convertWithLogging(
+      "ImageMagick",
+      convertWithImageMagick,
+      inputPath,
+      outputFormat
+    );
+  } catch (err) {
+    console.warn("HEIC encode not supported in this environment:", err.message);
+
+    // fallback (so frontend doesn't crash with null url)
+    const fallbackPath = inputPath + ".jpeg";
+    await sharp(inputPath).toFormat("jpeg").toFile(fallbackPath);
+    return fallbackPath;
+  }
+}
+
 
   if (
     ["jpeg", "jpg", "png", "bmp"].includes(detectedInputFormat) &&
