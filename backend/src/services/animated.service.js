@@ -6,8 +6,15 @@ export function isAnimatedFormat(format) {
   return animatedFormats.has(format);
 }
 
+// export async function convertAnimatedFormat(inputPath, outputFormat) {
+//   // Use gifsicle, ffmpeg, or imagemagick CLI to convert animated images
+//   // Placeholder example:
+//   throw new Error("Animated format conversion not implemented yet");
+// }
 export async function convertAnimatedFormat(inputPath, outputFormat) {
-  // Use gifsicle, ffmpeg, or imagemagick CLI to convert animated images
-  // Placeholder example:
-  throw new Error("Animated format conversion not implemented yet");
+  const outputPath = inputPath + "." + outputFormat;
+  await sharp(inputPath, { animated: true })
+    .toFormat(outputFormat)
+    .toFile(outputPath);
+  return outputPath;
 }
