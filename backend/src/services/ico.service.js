@@ -1,143 +1,103 @@
-// services/ico.service.js
-import sharp from "sharp";
-import { exec } from "child_process";
-import util from "util";
 import fs from "fs/promises";
 import path from "path";
-import { convertWithImageMagick } from "./imagick.service.js";
+import os from "os";
+import sharp from "sharp";
+import { exec as execCb } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(execCb);
 
-const execAsync = util.promisify(exec);
+// safe icon sizes expected by OS loaders
+const ICON_SIZES = [16, 24, 32, 48, 64, 128, 256];
 
-// Standard multi-res sizes for Windows ICO
-const iconSizes = [256, 128, 64, 48, 32, 16];
+async function findImageMagickCmd() {
+  // prefer ImageMagick 7 ('magick'), fallback to 'convert'
+  try {
+    await execAsync('magick -version');
+    return 'magick';
+  } catch (e) {
+    try {
+      await execAsync('convert -version');
+      return 'convert';
+    } catch (e2) {
+      throw new Error('ImageMagick not found. Install ImageMagick (ensure `magick` or `convert` is on PATH).');
+    }
+  }
+}
 
-// export async function convertToIco(inputPath) {
-//   const tempDir = path.dirname(inputPath);
-//   const basename = path.basename(inputPath, path.extname(inputPath));
-
-//   const resizedPaths = [];
-
-//   try {
-//     // Generate all required PNGs
-//     for (const size of iconSizes) {
-//       const resizedPath = path.join(tempDir, `${basename}-${size}.png`);
-
-//       await sharp(inputPath)
-//         .resize(size, size, {
-//           fit: "cover", // guarantee exact square size
-//           background: { r: 0, g: 0, b: 0, alpha: 0 }, // transparent padding
-//         })
-//         .png({ compressionLevel: 0 }) // uncompressed PNGs for ICO safety
-//         .toFile(resizedPath);
-
-//       resizedPaths.push(resizedPath);
-//     }
-
-//     // Define ICO output path
-//     const outputPath = path.join(tempDir, `${basename}.ico`);
-
-//     // Combine PNGs into a multi-res ICO
-//     // Note: no need for -define icon:auto-resize=0 → magick handles it
-//     const cmd = `magick ${resizedPaths.join(" ")} "${outputPath}"`;
-//     await execAsync(cmd);
-
-//     return outputPath;
-//   } finally {
-//     // Cleanup temp resized PNGs
-//     await Promise.all(
-//       resizedPaths.map(async (file) => {
-//         try {
-//           await fs.unlink(file);
-//         } catch {}
-//       })
-//     );
-//   }
-// }
-
-// services/ico.service.js
-
+async function validateFileNonEmpty(filePath, contextMsg) {
+  try {
+    const st = await fs.stat(filePath);
+    if (!st.isFile() || st.size === 0) {
+      throw new Error(`${contextMsg}: file missing or zero-size -> ${filePath}`);
+    }
+  } catch (err) {
+    throw new Error(`${contextMsg}: ${err.message}`);
+  }
+}
 
 export async function convertToIco(inputPath) {
-  const tempDir = path.dirname(inputPath);
+  const magickCmd = await findImageMagickCmd();
+
+  // Use a stable temp directory per conversion to avoid collisions
+  const tmpBase = path.join(os.tmpdir(), `desipix-ico-${Date.now()}-${Math.floor(Math.random()*10000)}`);
+  await fs.mkdir(tmpBase, { recursive: true });
+
   const basename = path.basename(inputPath, path.extname(inputPath));
-  const resizedPaths = [];
+  const tempFiles = [];
 
   try {
-    // First, check if input format is supported by Sharp
-    let workingInputPath = inputPath;
-    const inputExt = path.extname(inputPath).toLowerCase();
-    
-    // If input is BMP, convert to PNG first since Sharp doesn't handle BMP well
-    if (inputExt === '.bmp' || inputExt === '') {
-      console.log("Detected BMP input, converting to PNG first...");
-      try {
-        // Use ImageMagick to convert BMP to PNG
-        const tempPngPath = path.join(tempDir, `${basename}_temp.png`);
-        const cmd = `magick "${inputPath}" "${tempPngPath}"`;
-        await execAsync(cmd);
-        workingInputPath = tempPngPath;
-        resizedPaths.push(tempPngPath); // Add to cleanup list
-        console.log("BMP to PNG conversion successful");
-      } catch (bmpError) {
-        console.error("Failed to convert BMP to PNG:", bmpError);
-        // Fallback to direct ImageMagick ICO conversion
-        return await convertWithImageMagick(inputPath, "ico");
-      }
+    // 1) Normalize input -> single PNG (ImageMagick is robust for BMP quirks)
+    const normalizedPng = path.join(tmpBase, `${basename}-norm.png`);
+    // Use magick/convert to create a normalized PNG
+    const normalizeCmd = `${magickCmd} "${inputPath}" "${normalizedPng}"`;
+    console.log(`Running normalization: ${normalizeCmd}`);
+    await execAsync(normalizeCmd);
+    await validateFileNonEmpty(normalizedPng, "Normalization failed");
+    tempFiles.push(normalizedPng);
+
+    // 2) Generate PNGs for each icon size via Sharp (fast)
+    const resized = [];
+    for (const size of ICON_SIZES) {
+      const resizedPath = path.join(tmpBase, `${basename}-${size}.png`);
+      await sharp(normalizedPng)
+        .resize(size, size, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ compressionLevel: 0 })
+        .toFile(resizedPath);
+
+      await validateFileNonEmpty(resizedPath, `Resize to ${size} failed`);
+      resized.push(resizedPath);
+      tempFiles.push(resizedPath);
     }
 
-    // Generate all required PNGs
-    for (const size of iconSizes) {
-      const resizedPath = path.join(tempDir, `${basename}-${size}.png`);
+    // 3) Combine resized PNGs into .ico with ImageMagick (robust)
+    const outputDir = path.dirname(inputPath);
+    const outIcoPath = path.join(outputDir, `${basename}.ico`);
+    const buildCmd = `${magickCmd} ${resized.map(p => `"${p}"`).join(" ")} "${outIcoPath}"`;
+    console.log(`Building ICO: ${buildCmd}`);
+    await execAsync(buildCmd);
 
-      try {
-        await sharp(workingInputPath)
-          .resize(size, size, {
-            fit: "cover", // guarantee exact square size
-            background: { r: 0, g: 0, b: 0, alpha: 0 }, // transparent padding
-          })
-          .png({ compressionLevel: 0 }) // uncompressed PNGs for ICO safety
-          .toFile(resizedPath);
+    await validateFileNonEmpty(outIcoPath, "ICO creation failed");
+    console.log("ICO conversion successful:", outIcoPath);
+    return outIcoPath;
 
-        resizedPaths.push(resizedPath);
-      } catch (sharpError) {
-        console.error(`Failed to create ${size}x${size} PNG:`, sharpError);
-        // If Sharp fails, try ImageMagick fallback
-        return await convertWithImageMagick(inputPath, "ico");
-      }
-    }
-
-    // Define ICO output path
-    const outputPath = path.join(tempDir, `${basename}.ico`);
-
-    // Combine PNGs into a multi-res ICO (exclude the temp PNG from this step)
-    const sizePngs = resizedPaths.filter(p => !p.includes('_temp.png'));
-    const cmd = `magick ${sizePngs.map(p => `"${p}"`).join(" ")} "${outputPath}"`;
-    console.log("Executing ICO creation command:", cmd);
-    await execAsync(cmd);
-
-    console.log("ICO conversion successful:", outputPath);
-    return outputPath;
-    
-  } catch (error) {
-    console.error("ICO conversion failed:", error);
-    // Final fallback to direct ImageMagick conversion
+  } catch (err) {
+    console.error("convertToIco error:", err && err.stack ? err.stack : err);
+    // Final fallback: if you already have a convertWithImageMagick helper, call it here
+    // (this code assumes you have convertWithImageMagick implemented)
     try {
-      console.log("Trying direct ImageMagick ICO conversion as fallback...");
+      console.log("Falling back to convertWithImageMagick...");
       return await convertWithImageMagick(inputPath, "ico");
-    } catch (fallbackError) {
-      throw new Error(`ICO conversion failed: ${error.message}. Fallback also failed: ${fallbackError.message}`);
+    } catch (fallbackErr) {
+      throw new Error(`ICO conversion failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
     }
   } finally {
-    // Cleanup temp resized PNGs
-    await Promise.all(
-      resizedPaths.map(async (file) => {
-        try {
-          await fs.unlink(file);
-          console.log(`Cleaned up temp file: ${file}`);
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      })
-    );
+    // cleanup tempFiles and temp dir
+    await Promise.all(tempFiles.map(async f => {
+      try { await fs.unlink(f); } catch (e) { /* ignore */ }
+    }));
+    try { await fs.rmdir(tmpBase); } catch (e) { /* ignore - may contain leftover files */ }
   }
 }
