@@ -1,32 +1,41 @@
+// backend/src/server.js
 import dotenv from "dotenv";
 import app from "./app.js";
-import { runCleanup, scheduleCleanup } from "./utils/cleanup.js";
+import {
+  getHealthStatus,
+  handleManualCleanup,
+  handleGracefulShutdown,
+  initializeServer,
+} from "./utils/serverUtils.js";
 
 dotenv.config();
-
 const PORT = process.env.PORT || 3000;
 
-// periodic cleanup
-const cleanupInterval = scheduleCleanup();
+// Start server
+const server = app.listen(PORT, async () => {
+  console.log(`🚀 App is listening on http://localhost:${PORT}`);
 
-// start server
-const server = app.listen(PORT, () => {
-  console.log(`App is listening on http://localhost:${PORT}`);
+  // Initialize cleanup + monitoring system
+  await initializeServer();
 });
 
+// Configure server timeouts
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 120100;
 
-// graceful shutdown
-async function shutdown(signal) {
-  console.log(`\nReceived ${signal}, shutting down gracefully...`);
-  clearInterval(cleanupInterval);
-  await runCleanup(`shutdown via ${signal}`);
-  server.close(() => {
-    console.log("HTTP server closed.");
-    process.exit(0);
-  });
-}
+// Health endpoint
+app.get("/health", async (req, res) => {
+  const health = await getHealthStatus();
+  res.status(health.status === "unhealthy" ? 500 : 200).json(health);
+});
 
-process.on("SIGINT", () => shutdown("SIGINT (Ctrl+C)"));
-process.on("SIGTERM", () => shutdown("SIGTERM (external stop)"));
+// Manual cleanup endpoint
+app.post("/admin/cleanup", async (req, res) => {
+  const { type = "full" } = req.body;
+  const result = await handleManualCleanup(type);
+  res.status(result.success ? 200 : 500).json(result);
+});
+
+// Graceful shutdown handlers
+process.on("SIGINT", () => handleGracefulShutdown(server, "SIGINT"));
+process.on("SIGTERM", () => handleGracefulShutdown(server, "SIGTERM"));
