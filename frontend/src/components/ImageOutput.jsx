@@ -25,7 +25,7 @@ export default function ImageOutput({ convertedUrl, loading }) {
       console.error(error);
     }
   };
-  
+
   const getPreview = (file) => {
     const ext = file.name?.split(".").pop().toLowerCase();
     // if (ext === "heic" || ext === "heif") return  heicPreview;
@@ -46,88 +46,58 @@ export default function ImageOutput({ convertedUrl, loading }) {
         </div>
       ) : (
         <>
-          <div className={`max-h-96 overflow-y-auto gap-4 mb-4 ${convertedUrl.length>4 ?"grid grid-cols-3":"grid grid-cols-1"}`}>
-            {/* {convertedUrl.map((file, idx) => (
-              // <>
-              //   <div key={file.name} className="border p-2 bg-white rounded">
-              //     <img
-              //       src={file.url}
-              //       alt="Converted"
-              //       className="w-full h-64 object-contain border rounded bg-white mb-2"
-              //     />
-
-              //     <p className="">{file?.name}</p>
-              //   </div>
-
-              //   <div className="flex flex-row justify-center m-3 p-6">
-              //     <a
-              //       href={file?.url}
-              //       download={file.name}
-              //       className="bg-green-600 hover:bg-green-700 transition duration-200 text-white px-6 py-2 rounded shadow-md cursor-pointer"
-              //     >
-              //       Download
-              //     </a>
-              //   </div>
-              // </>
+          <div className="max-h-96 overflow-y-auto flex flex-col gap-3">
+          {convertedUrl
+            .filter((file) => file.url && file.url !== "null")
+            .map((file, idx) => (
               <div
-                key={file.id || file.url}
-                className="border p-2 bg-white rounded"
+                key={file.url || file.name || idx}
+                className="flex items-center gap-3 border p-2 bg-white rounded shadow-sm"
               >
-                <img
-                  src={file.url}
-                  alt="Converted"
-                  className="w-full h-64 object-contain border rounded bg-white mb-2"
-                />
-                <p>{file?.name}</p>
-                {file.error && (
-                  <p className="text-red-500">Error: {file.error}</p>
-                )}
-                <div className="flex justify-center m-3">
-                  <a
-                    href={file.url}
-                    download={file.name || file.originalName}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow-md"
-                  >
-                    Download
-                  </a>
-
-                  <button
-                    onClick={() => handleDownload(file.url, file.name)}
-                    className="bg-green-600 hover:bg-green-700 cursor-pointer text-white px-6 py-2 rounded shadow-md"
-                  >
-                    Download
-                  </button>
-                </div>
-              </div>
-            ))} */}
-
-            {convertedUrl
-              .filter((file) => file.url && file.url !== "null")
-              .map((file, idx) => (
-                <div
-                  key={file.url || file.name || idx}
-                  className="border p-2 bg-white rounded"
-                >
+                {/* Thumbnail */}
+                <div className="w-20 h-20 flex-shrink-0">
                   <img
                     src={getPreview(file)}
                     alt={file.name || "Converted"}
-                    className="w-full h-64 object-contain border rounded bg-white mb-2"
+                    className="w-20 h-20 object-cover border rounded bg-white"
+                    loading="lazy"
                   />
-                  <p>{file.name}</p>
-                  {file.error && (
-                    <p className="text-red-500">Warning: {file.error}</p>
-                  )}
-                  <div className="flex justify-center m-3">
-                    <button
-                      onClick={() => handleDownload(file.url, file.name)}
-                      className="bg-green-600 hover:bg-green-700 cursor-pointer text-white px-6 py-2 rounded shadow-md"
-                    >
-                      Download
-                    </button>
-                  </div>
                 </div>
-              ))}
-          </div>
+
+                {/* File info + download */}
+                <div className="flex flex-col justify-between flex-1 overflow-hidden">
+                  <p
+                    className="text-sm font-medium truncate max-w-[200px]"
+                    title={file.name}
+                  >
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase">
+                    {file.name?.split(".").pop()}
+                  </p>
+                </div>
+
+                {/* Download button */}
+                <div className="flex-shrink-0">
+<button
+  onClick={() => handleDownload(file.url, file.name)}
+  aria-label={`Download ${file.name}`}
+  className="bg-green-600 hover:bg-green-700 text-white rounded 
+             px-1 py-1 sm:px-4 sm:py-2 
+             text-sm ml-2 flex items-center justify-center"
+>
+  {/* Mobile: icon only */}
+  <span className="block sm:hidden">⬇</span>
+
+  {/* Desktop: text */}
+  <span className="hidden sm:inline">Download</span>
+</button>
+
+
+                </div>
+              </div>
+            ))}
+        </div>
         </>
       )}
     </div>

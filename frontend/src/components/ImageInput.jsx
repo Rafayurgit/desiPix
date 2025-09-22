@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import heicPreview from "../assets/heicPreview.png";
-import tiffPreview from "../assets/tiffPreview.png"
+import tiffPreview from "../assets/tiffPreview.png";
 import { uploadAndConvert } from "../services/apiService";
 import {
   getExtension,
@@ -54,7 +54,7 @@ export default function ImageInput({
     }
     if (ext === "heic" || ext === "heif") {
       setPreviewUrl(heicPreview);
-    } else if (ext === "tiff" || ext === "tif"){
+    } else if (ext === "tiff" || ext === "tif") {
       setPreviewUrl(tiffPreview);
     } else {
       setPreviewUrl(URL.createObjectURL(file));
@@ -67,31 +67,30 @@ export default function ImageInput({
   // For dropzone and manual input—NO duplicate logic!
   const handleDrop = useCallback(
     (acceptedFiles) => {
-      const validFiles=[];
-      const preViews=[];
+      const validFiles = [];
+      const preViews = [];
 
-      acceptedFiles.forEach((file)=>{
-        const ext=getExtension(file.name);
-        
-        if(isAcceptedFormat(ext)){
+      acceptedFiles.forEach((file) => {
+        const ext = getExtension(file.name);
+
+        if (isAcceptedFormat(ext)) {
           validFiles.push(file);
 
           if (ext === "heic" || ext === "heif") {
-      preViews.push(heicPreview);
-    } else if (ext === "tiff" || ext === "tif") {
-      preViews.push(tiffPreview);
-    } else {
-      preViews.push(URL.createObjectURL(file));
-    }
+            preViews.push(heicPreview);
+          } else if (ext === "tiff" || ext === "tif") {
+            preViews.push(tiffPreview);
+          } else {
+            preViews.push(URL.createObjectURL(file));
+          }
         }
-        
-      })
+      });
 
       // if (acceptedFiles[0]) onFileSelected(acceptedFiles[0]);
 
       setSelectedFile(validFiles);
       setPreviewUrl(preViews);
-      setFeedback({warn:"", error:""})
+      setFeedback({ warn: "", error: "" });
     },
     [onFileSelected]
   );
@@ -118,13 +117,13 @@ export default function ImageInput({
     setLastConversion({ signature: "", format: "" });
   };
 
-  const handleRemoveFile = (index)=>{
-    const updatedFiles    = selectedFile.filter((_, i)=> i !== index);
-    const updatedPreviews = previewUrl.filter((_, i)=> i !== index); 
+  const handleRemoveFile = (index) => {
+    const updatedFiles = selectedFile.filter((_, i) => i !== index);
+    const updatedPreviews = previewUrl.filter((_, i) => i !== index);
 
     setSelectedFile(updatedFiles);
     setPreviewUrl(updatedPreviews);
-  }
+  };
 
   // Choose format
   const handleFormatChange = (e) => setTargetFormat(e.target.value);
@@ -140,40 +139,36 @@ export default function ImageInput({
       return;
     }
 
-    
-    for(const file of selectedFile){
+    for (const file of selectedFile) {
       const ext = getExtension(file.name);
 
       if (
-    ext === targetFormat.toLowerCase() ||
-    (ext === "jpg" && targetFormat === "jpeg") ||
-    (ext === "jpeg" && targetFormat === "jpg")
-  ) {
-    setFeedback({
-      warn: `You are trying to convert "${file.name}" to the same format`,
-      error: "",
-    });
-    setLoading(false);
-    return;
-  }
+        ext === targetFormat.toLowerCase() ||
+        (ext === "jpg" && targetFormat === "jpeg") ||
+        (ext === "jpeg" && targetFormat === "jpg")
+      ) {
+        setFeedback({
+          warn: `You are trying to convert "${file.name}" to the same format`,
+          error: "",
+        });
+        setLoading(false);
+        return;
+      }
 
-  if (
-      ext === targetFormat.toLowerCase() ||
-      (ext === "jpg" && targetFormat === "jpeg") ||
-      (ext === "jpeg" && targetFormat === "jpg")
-    ) {
-      setFeedback({
-        warn: "You are trying to convert the file to the same format",
-        error: "",
-      });
-      setLoading(false);
+      if (
+        ext === targetFormat.toLowerCase() ||
+        (ext === "jpg" && targetFormat === "jpeg") ||
+        (ext === "jpeg" && targetFormat === "jpg")
+      ) {
+        setFeedback({
+          warn: "You are trying to convert the file to the same format",
+          error: "",
+        });
+        setLoading(false);
 
-      return;
+        return;
+      }
     }
-
-    }
-
-    
 
     const currSig = generateSignature(selectedFile);
     if (
@@ -193,7 +188,6 @@ export default function ImageInput({
     setLoading(true);
 
     // try {
-
     //   const response = await axios.post(
     //     "http://localhost:8080/upload",
     //     formData,
@@ -242,7 +236,7 @@ export default function ImageInput({
     //     signature: generateSignature(selectedFile),
     //     format: targetFormat,
     //   });
-    // } 
+    // }
     // try{
     //   const result = await Promise.all(
     //     selectedFile.map((file)=>
@@ -258,22 +252,23 @@ export default function ImageInput({
     //   )
     // }
 
-    try{
-      const data = await uploadAndConvert(selectedFile, targetFormat, (p)=> setProgress(Math.min(p,70)));
+    try {
+      const data = await uploadAndConvert(selectedFile, targetFormat, (p) =>
+        setProgress(Math.min(p, 70))
+      );
       // if(data.success){
       //   setConvertedUrl(data.files);
       // }
       if (data.success) {
-    const backendUrl = "http://localhost:8080"; // 👈 your backend URL
-    setConvertedUrl(
-      data.files.map((f) => ({
-        ...f,
-        url: `${backendUrl}${f.url}`, // 👈 prefix with backend
-      }))
-    );
-  }
-    }
-    catch (e) {
+        const backendUrl = "http://localhost:8080"; // 👈 your backend URL
+        setConvertedUrl(
+          data.files.map((f) => ({
+            ...f,
+            url: `${backendUrl}${f.url}`, // 👈 prefix with backend
+          }))
+        );
+      }
+    } catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 409) {
         setFeedback({
           warn: "This image has already been converted to this format earlier. Reset or choose another format.",
@@ -320,32 +315,84 @@ export default function ImageInput({
     >
       <h1 className="text-xl font-semibold mb-4">Upload Image</h1>
 
-      {previewUrl.length > 0  ? (
+      {previewUrl.length > 0 ? (
         <>
-        <div className={`max-h-96 overflow-y-auto gap-4 mb-4 ${previewUrl.length > 4 ? "grid grid-cols-3" : "grid grid-cols-2"}`}>
-          {previewUrl.map((url,idx)=>(
-            <div key={idx} className="border p-2 bg-white rounded">
-              <div className="relative border p-2 bg-white rounded">
-                <button onClick={()=>handleRemoveFile(idx)}
-                className="absolute top-1 right-1 bg-indigo-900 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
-        title="Remove image"
-                >
-                  ✕
-                </button>
-              </div>
-              <img
-            src={url}
-            alt={selectedFile[idx]?.name || "preview"}
-            className="w-full h-64 object-contain border rounded bg-white mb-2"
-          />
-          <p className="text-sm truncate">{selectedFile[idx]?.name}</p>
-          {url.error && (
+          {/* <div
+            className={`max-h-96 overflow-y-auto gap-4 mb-4 ${
+              previewUrl.length > 4 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
+            }`}
+          >
+            {previewUrl.map((url, idx) => (
+              <div key={idx} className="border p-2 bg-white rounded">
+                <div className="relative border p-2 bg-white rounded">
+                  <button
+                    onClick={() => handleRemoveFile(idx)}
+                    aria-label={`Remove ${
+                      selectedFile[idx]?.name || `file ${idx + 1}`
+                    }`}
+                    className="absolute top-1 right-1 bg-indigo-900 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
+                    title="Remove image"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <img
+                  src={url}
+                  alt={selectedFile[idx]?.name || "preview"}
+                  className="w-full h-64 object-contain border rounded bg-white mb-2"
+                />
+                <p className="text-sm truncate">{selectedFile[idx]?.name}</p>
+                {url.error && (
                   <p className="text-red-500">Error: {url.error}</p>
                 )}
-            </div>
-            
-          ))}
-        </div>
+              </div>
+            ))}
+          </div> */}
+          <div
+  className={`max-h-96 overflow-y-auto gap-4 mb-4 grid 
+    ${previewUrl.length > 4 ? "grid-cols-1" : "grid-cols-2"}`}
+>
+  {previewUrl.map((url, idx) => (
+    <div
+      key={idx}
+      className="flex items-center gap-3 border p-2 bg-white rounded shadow-sm"
+    >
+      {/* Thumbnail */}
+      <div className="relative w-20 h-20 flex-shrink-0">
+        <button
+          onClick={() => handleRemoveFile(idx)}
+          aria-label={`Remove ${selectedFile[idx]?.name || `file ${idx + 1}`}`}
+          type="button"
+          className="absolute -top-2 -right-2 bg-indigo-900 text-white rounded-full p-1 text-xs hover:bg-red-600 cursor-pointer"
+          title="Remove image"
+        >
+          ✕
+        </button>
+
+        <img
+          src={url}
+          alt={selectedFile[idx]?.name || "preview"}
+          className="w-20 h-20 object-cover border rounded bg-white"
+          loading="lazy"
+        />
+      </div>
+
+      {/* File info */}
+      <div className="flex flex-col justify-between overflow-hidden">
+        <p
+          className="text-sm font-medium truncate max-w-[200px]"
+          title={selectedFile[idx]?.name}
+        >
+          {selectedFile[idx]?.name}
+        </p>
+        <p className="text-xs text-gray-500">
+          {getExtension(selectedFile[idx]?.name).toUpperCase()}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 p-5 justify-between items-stretch w-full">
             <div className="w-full sm:flex-1 min-w-[150px]">
               {formatDropdown}
@@ -358,13 +405,17 @@ export default function ImageInput({
         ? "bg-gray-400 cursor-not-allowed"
         : "bg-indigo-900 hover:bg-indigo-700 cursor-pointer"
     }`}
+              aria-label="Convert selected images"
+              title="Convert images"
               onClick={handleConvert}
               disabled={!selectedFile || !targetFormat || loading}
             >
               Convert
             </button>
             <button
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md cursor-pointer"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md cursor-pointer "
+              aria-label="Reset selected images"
+              title="Reset "
               onClick={handleReset}
             >
               Reset
