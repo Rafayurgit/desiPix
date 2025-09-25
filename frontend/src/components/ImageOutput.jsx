@@ -1,18 +1,16 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
+import FileCard from "../common/FileCard";
 import ComponentLoader from "./componentLoader";
-import heicPreview from "../assets/heicPreview.png";
-import tiffPreview from "../assets/tiffPreview.png";
+import JSZip from "jszip";
 
-export default function ImageOutput({ convertedUrl, loading }) {
-  const handleDownload = async (url, filename) => {
-    if (!url || url === "null") {
-      alert("Invalid download URL");
-      return;
-    }
+export default function ImageOutput({ convertedUrl = [], loading }) {
+
+  const handleDownload = useCallback(async (url, filename) => {
+    if (!url || url === "null") { alert("Invalid download URL"); return; }
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Download failed");
-      const blob = await response.blob();
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Download failed");
+      const blob = await resp.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = filename;
@@ -20,84 +18,83 @@ export default function ImageOutput({ convertedUrl, loading }) {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    } catch (error) {
+    } catch (err) {
+      console.error(err);
       alert("Failed to download file");
-      console.error(error);
     }
-  };
+  }, []);
 
-  const getPreview = (file) => {
-    const ext = file.name?.split(".").pop().toLowerCase();
-    // if (ext === "heic" || ext === "heif") return  heicPreview;
-    if (ext === "tiff" || ext === "tif") return tiffPreview;
-    return file.url; // fallback: actual image
-  };
+  const handleDownloadAll = useCallback(async () => {
+    if (!convertedUrl.length) return;
+    const zip = new JSZip();
+
+    for (const file of convertedUrl) {
+      try {
+        const resp = await fetch(file.url);
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        zip.file(file.name, blob);
+      } catch (err) {
+        console.error(`Failed to fetch ${file.name}`, err);
+      }
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(content);
+link.download = "DesiPix.zip"; // <-- folder name updated here
+document.body.appendChild(link);
+link.click();
+link.remove();
+setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+  }, [convertedUrl]);
+
+  const validFiles = useMemo(() => convertedUrl.filter(f => f.url && f.url !== "null"), [convertedUrl]);
 
   return (
-    <div className="w-full md:w-1/2 bg-gray-100 p-6 rounded-lg shadow-lg ">
+    <div className="w-full md:w-1/2 bg-gray-100 p-6 rounded-lg shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Converted Image</h2>
 
-      {!convertedUrl.length ? (
-        <div className="text-gray-500">
-          Your converted image will appear here after processing.
-          <div className="flex justify-center items-center">
-            {loading && <ComponentLoader />}
-          </div>
-        </div>
-      ) : (
+      {loading && <div className="flex justify-center items-center w-full mb-4"><ComponentLoader /></div>}
+
+      {!loading && validFiles.length === 0 && <div className="text-gray-500">Your converted image will appear here after processing.</div>}
+
+      {!loading && validFiles.length > 0 && (
         <>
-          <div className="max-h-96 overflow-y-auto flex flex-col gap-3">
-          {convertedUrl
-            .filter((file) => file.url && file.url !== "null")
-            .map((file, idx) => (
-              <div
-                key={file.url || file.name || idx}
-                className="flex items-center gap-3 border p-2 bg-white rounded shadow-sm"
-              >
-                {/* Thumbnail */}
-                <div className="w-20 h-20 flex-shrink-0">
-                  <img
-                    src={getPreview(file)}
-                    alt={file.name || "Converted"}
-                    className="w-20 h-20 object-cover border rounded bg-white"
-                    loading="lazy"
-                  />
-                </div>
+          
 
-                {/* File info + download */}
-                <div className="flex flex-col justify-between flex-1 overflow-hidden">
-                  <p
-                    className="text-sm font-medium truncate max-w-[200px]"
-                    title={file.name}
-                  >
-                    {file.name}
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase">
-                    {file.name?.split(".").pop()}
-                  </p>
-                </div>
+          <div role="list" className="max-h-96 overflow-y-auto flex flex-col gap-3">
+            {validFiles.map(file => {
+              const actionButton = (
+                <button
+                  type="button"
+                  title={`Download ${file.name}`}
+                  onClick={() => handleDownload(file.url, file.name)}
+                  aria-label={`Download ${file.name}`}
+                  className="bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-white rounded px-4 py-2 text-sm flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="hidden sm:inline">Download</span>
+                  <span className="sm:hidden" aria-hidden>⬇</span>
+                </button>
+              );
+              return <FileCard key={`${file.name}_${file.url}`} entry={file} actionButton={actionButton} />;
+            })}
+          </div>
 
-                {/* Download button */}
-                <div className="flex-shrink-0">
-<button
-  onClick={() => handleDownload(file.url, file.name)}
-  aria-label={`Download ${file.name}`}
-  className="bg-green-600 hover:bg-green-700 text-white rounded 
-             px-1 py-1 sm:px-4 sm:py-2 
-             text-sm ml-2 flex items-center justify-center"
+
+          <button
+  type="button"
+  onClick={handleDownloadAll}
+  aria-label="Download all images as ZIP"
+  title="Download all images as ZIP"
+  className={`transition duration-200 text-white px-6 py-2 rounded shadow-md mt-10
+    ${loading || !validFiles.length ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-900 hover:bg-indigo-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"}`}
+  disabled={loading || !validFiles.length}
 >
-  {/* Mobile: icon only */}
-  <span className="block sm:hidden">⬇</span>
-
-  {/* Desktop: text */}
-  <span className="hidden sm:inline">Download</span>
+  Download All
 </button>
 
-
-                </div>
-              </div>
-            ))}
-        </div>
         </>
       )}
     </div>
