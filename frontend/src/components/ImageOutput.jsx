@@ -88,7 +88,7 @@ setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   onClick={handleDownloadAll}
   aria-label="Download all images as ZIP"
   title="Download all images as ZIP"
-  className={`transition duration-200 text-white px-6 py-2 rounded shadow-md mt-10
+  className={`transition duration-200 text-white px-6 py-2 rounded shadow-md mt-8
     ${loading || !validFiles.length ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-900 hover:bg-indigo-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"}`}
   disabled={loading || !validFiles.length}
 >
