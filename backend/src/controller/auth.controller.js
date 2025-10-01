@@ -1,45 +1,137 @@
 import { use } from "react";
 import { User } from "../models/user.model";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/generateToken";
 
+const generateAccessAndRefereshTokens = async (userId) => {
+  try {
+    const user = await User.findOne(userId);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-const signUp = async (req,res)=>{
-    const {fullName, username, email, password} = req.body;
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
 
-    if([fullName,username,email,password].some((field)=>field?.trim()==="")){
-        return res.status(400).json({error:"All fileds are required" })
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new Error(
+      "Something went wrong while generating refresh and access token"
+    );
+  }
+};
+
+const signUp = async (req, res) => {
+  const { fullName, username, email, password } = req.body;
+
+  if (
+    [fullName, username, email, password].some((field) => field?.trim() === "")
+  ) {
+    return res.status(400).json({ error: "All fileds are required" });
+  }
+
+  const existUser = User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (existUser) {
+    return res
+      .status(409)
+      .json({ error: "User with email or username already exist" });
+  }
+
+  const user = await User.create({
+    fullName,
+    username: username.toLowercase(),
+    email,
+    password,
+  });
+
+  //now to send user data back to frontend for keeping it login
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  if (!createdUser) {
+    return res
+      .status(500)
+      .json({ error: "something went wrong while registering user" });
+  }
+
+  return res
+    .status(201)
+    .json({ message: "User created successfully", user: createdUser });
+};
+
+const singIn = async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if ([username, email].some((field) => field?.trim() == "")) {
+    return res.status(400).json({ error: "All fileds are required" });
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: "User does not exist SingUP first!" });
+  }
+
+  const passwordCheck = await User.findById(user._id).select(
+    "-password -refreshtoken"
+  );
+  if (password !== passwordCheck) {
+    return res.status(401).json({ error: "Invalid Password" });
+  }
+
+  const passwordcheck2 = await user.isPasswordCorrect(password);
+  if (password !== passwordcheck2) {
+    return res.status(401).json({ error: "Invalid Password" });
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+    user._id
+  );
+
+  const loggedUser = await User.findById(user._id).select(
+    "-password -refreshtoken"
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json({ message: "User loggedIn successfully" });
+};
+
+const logOut = async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
     }
+  )
 
-    const existUser = User.findOne({
-        $or:[{ username}, {email}]
-    })
+  const options={
+    httpOnly:true,
+    secure:true
+  }
 
-    if(existUser){
-        return res.status(409).json({error:"User with email or username already exist"})
-    }
+  return res.status(200)
+  .clearCookie("accessToken", options)
+  .clearCookie("refreshToken", options).json({message:" User logged Out "})
+};
 
-    const user = await User.create({
-        fullName,
-        username: username.toLowercase(),
-        email,
-        password
-    })
-
-    //now to send user data back to frontend for keeping it login
-    const createdUser =await User.findById(user._id).select("-password -refreshToken")
-
-    if(!createdUser){
-        return res.status(500).json({error:"something went wrong while registering user"})
-    }
-}
-
-const singIn = async(req,res)=>{
-
-}
-
-const logOut = async(req,res)=>{
-
-}
-
-export {
-    signUp,singIn,logOut
-}
+export { signUp, singIn, logOut };
