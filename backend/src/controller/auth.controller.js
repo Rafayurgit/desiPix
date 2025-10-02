@@ -4,6 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken";
+import jwt from "jsonwebtoken"
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -134,4 +135,56 @@ const logOut = async (req, res) => {
   .clearCookie("refreshToken", options).json({message:" User logged Out "})
 };
 
-export { signUp, singIn, logOut };
+const refreshAcceeToken = async(req, res)=>{
+    
+    const incomingRefreshToken = req.cookie.refreshToken || req.header.refreshToken;
+
+    if(!incomingRefreshToken){
+        return res.status(401).json({error:"Unauthorized request"})
+    }
+
+    try {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.JWT_REFRESH_SECRET)
+        const user =await User.findById(decodedToken._id);
+    
+        if(!user){
+            return res.status(401).json({error:"Invalid refresh token"})
+        }
+    
+        if(incomingRefreshToken !== user?.refreshAcceeToken){
+            return res.status(401).json({error:"Refresh toekn expired or used"})
+        }
+    
+        const options ={
+            httpOnly:true,
+            secure:true
+        }
+    
+        const {accessToken, refreshToken}=generateAccessAndRefereshTokens(user._id);
+    
+        return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken).json({message:"Access token refreshed"})
+    
+    } catch (error) {
+        return res.status(401).json({error: error.message || "Invalid refresh token"})
+    }
+}
+
+const changeCurrectPassword = async( req,res)=>{
+
+    const {oldPassword, newPassword}= req.body;
+
+    const user =await User.findById(req.user?._id);
+    const isPasswordCorrect =await user.isPasswordCorrect(oldPassword);
+
+    if(!isPasswordCorrect){
+        return res.status(400).json({error:"Invalid old paddword"})
+    }
+
+    user.password=newPassword;
+    await user.save({validateBeforeSave:false});
+
+    return res.status(200).json({message:"Passwprd changes successfully"})
+}
+
+
+export { signUp, singIn, logOut, refreshAcceeToken };
