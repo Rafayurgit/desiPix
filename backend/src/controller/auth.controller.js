@@ -1,9 +1,99 @@
+import {OAuth2Client} from "google-auth-library";
 import { User } from "../models/user.model.js";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken"
+import { use } from "react";
+
+const oauth2Client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI // e.g. https://your-backend.com/auth/google/callback
+);
+
+export const googleRedirect = (req, res) => {
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline", // ask for refresh token at first consent
+    prompt: "consent",
+    scope: ["openid", "profile", "email"],
+  });
+  return res.redirect(url);
+};
+
+export const googleCallback =async(req,res)=>{
+  try {
+    const code = req.query.code;
+    if(!code) return res.redirect(`${process.env.CLIENT_URL}/auth/failure`);
+
+    const {tokens}=await oauth2Client.getToken(code);
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken:tokens.id_token,
+      audience:process.env.GOOGLE_CLIENT_ID,
+    })
+
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+    const email = payload.email;
+    const fullName = payload.name;
+    const avatar = payload.picture;
+    const emailVerified = payload.email_verified;
+
+    let user = await User.findOne({ $or:[{googleId}, {email}]})
+
+    if(user){
+      if(!user.googleId){
+        user.googleId= googleId;
+        user.provider= "google";
+        user.isVerified= user.isVerified || emailVerified;
+        user.avatar = user.avatar || avatar;
+        await user.save({validateBeforeSave:false})
+      }
+    }else{
+      const baseUsername = (email?.split("@")[0] || fullName?.replace(/\s+/g, "").toLowerCase()) || `user${Date.now()}`;
+      let username = baseUsername.toLowerCase();
+
+      let suffix =0;
+      while( await User.findOne({username})){
+        suffix++;
+        username = `${baseUsername}${suffix}`
+      }
+
+      const randomPassword = Math.random().toString(36).slice(2, 12);
+
+      user = await User.create({
+        fullName,
+        username,
+        email,
+        password: randomPassword,
+        googleId,
+        provider: "google",
+        avatar,
+        isVerified:emailVerified
+      })
+    }
+
+    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id);
+
+    const cookieOptions ={
+      httpOnly:true,
+      secure:process.env.NODE_ENV === "production",
+      sameSite:"lax"
+    }
+
+    return res
+    .cookie("accessTOken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .redirect(`${process.env.CLIENT_URL}/auth/success`);
+
+  } catch (error) {
+    console.error("Google OAuth callback error:", err);
+    return res.redirect(`${process.env.CLIENT_URL}/auth/failure`);
+  }
+}
+
+
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
