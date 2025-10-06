@@ -1,5 +1,6 @@
 // backend/src/server.js
 import dotenv from "dotenv";
+dotenv.config();
 import app from "./app.js";
 import {
   getHealthStatus,
@@ -8,7 +9,7 @@ import {
   initializeServer,
 } from "./utils/serverUtils.js";
 
-dotenv.config();
+
 const PORT = process.env.PORT || 3000;
 
 // Start server
