@@ -1,11 +1,15 @@
+import dotenv from "dotenv";
+dotenv.config();
 import {OAuth2Client} from "google-auth-library";
 import { User } from "../models/user.model.js";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken.js";
-import jwt from "jsonwebtoken"
-import { use } from "react";
+import jwt from "jsonwebtoken";
+
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -83,12 +87,12 @@ export const googleCallback =async(req,res)=>{
     }
 
     return res
-    .cookie("accessTOken", accessToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
     .redirect(`${process.env.CLIENT_URL}/auth/success`);
 
   } catch (error) {
-    console.error("Google OAuth callback error:", err);
+    console.error("Google OAuth callback error:", error);
     return res.redirect(`${process.env.CLIENT_URL}/auth/failure`);
   }
 }
@@ -173,9 +177,7 @@ const signUp = async (req, res) => {
 const signIn = async (req, res) => {
   const { username, email, password } = req.body;
 
-  if ([username, email].some((field) => field?.trim() == "")) {
-    return res.status(400).json({ error: "All fileds are required" });
-  }
+  if (!username && !email) return res.status(400).json({ error: "Email or username required" });
 
   const user = await User.findOne({
     $or: [{ username }, { email }],
@@ -239,7 +241,7 @@ const logOut = async (req, res) => {
   }
 };
 
-const refreshAcceeToken = async(req, res)=>{
+const refreshAccessToken = async(req, res)=>{
 
     console.log("Cookies received:", req.cookies);
     console.log("Body received:", req.body);
@@ -278,7 +280,7 @@ const refreshAcceeToken = async(req, res)=>{
     }
 }
 
-const changeCurrectPassword = async( req,res)=>{
+const changeCurrentPassword = async( req,res)=>{
 
     const {oldPassword, newPassword}= req.body;
 
@@ -296,4 +298,4 @@ const changeCurrectPassword = async( req,res)=>{
 }
 
 
-export { signUp, signIn, logOut, refreshAcceeToken, changeCurrectPassword};
+export { signUp, signIn, logOut, refreshAccessToken, changeCurrentPassword};

@@ -1,46 +1,72 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import { type } from "os";
 
-const userSchema = new mongoose.schema({
+const userSchema = new mongoose.Schema({
+  fullName: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true,
+  },
   username: {
     type: String,
     required: true,
-    unique:true,
+    unique: true,
     lowercase: true,
     trim: true,
     index: true,
   },
-  email:{
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index:true,
+    match: [/^\S+@\S+\.\S+$/, "Invalid email address"] 
+  },
+  password: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true,
+  },
+  refreshToken: {
+    type: String,
+  },
+  googleId:{
     type:String,
-    required:true,
     unique:true,
-    lowercase:true,
-    trim:true
+    sparse: true, // allows null for normal users
   },
-  password:{
+  provider:{
     type:String,
-    required:true,
-    trim:true,
-    index:true
+    enum:["local", "google"],
+    default:"local",
   },
-  refreshToken:{
-    type:String
+  avatar:{
+    type:String,
+  },
+  isVerified:{
+    type:Boolean,
+    default:false
   }
+},
+  {
+    timestamps:true
+  });
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
-userSchema.pre("save", async function(next){
-    if(!this.isModified("password")) return next();
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
 
-    this.password= await bcrypt.hash(this.password, 10);
-    next();
-
-})
-
-userSchema.methods.isPasswordCorrect = async function(password){
-    return await bcrypt.compare(password, this.password)
-}
-
-export const User= mongoose.model("User", userSchema)
+export const User = mongoose.model("User", userSchema);
 // module.exports = mongoose.model('User', userSchema);
-
-
