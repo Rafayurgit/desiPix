@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import photojugaad2 from "../assets/photojugaad2.png"
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
@@ -13,14 +14,17 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="text-lg font-semibold text-indigo-700 hover:text-indigo-900 transition-colors duration-200"
+            className="text-lg font-semibold text-bg-[#1B2B55] hover:text-indigo-900 transition-colors duration-200"
           >
-            Home
+            <img src={photojugaad2} 
+            className="w-15 h-15"
+            alt=""
+             />
           </Link>
           {user && (
             <Link
               to="/dashboard"
-              className="text-sm font-medium text-gray-700 hover:text-indigo-700 transition-colors"
+              className="text-sm font-medium text-gray-700 hover:text-[#1B2B55] transition-colors"
             >
               Dashboard
             </Link>
@@ -33,13 +37,13 @@ export default function Navbar() {
             <>
               <Link
                 to="/login"
-                className="px-4 py-1.5 border border-indigo-600 text-indigo-700 rounded-md text-sm font-medium hover:bg-indigo-50 transition duration-200"
+                className="px-4 py-1.5 border border-[#1B2B55] text-bg-[#1B2B55] rounded-md text-sm font-medium hover:bg-indigo-50 transition duration-200"
               >
                 Login
               </Link>
               <Link
                 to="/signIn"
-                className="px-4 py-1.5 bg-indigo-700 text-white rounded-md text-sm font-medium hover:bg-indigo-800 transition duration-200"
+                className="px-4 py-1.5 bg-[#1B2B55] text-white rounded-md text-sm font-medium hover:bg-indigo-800 transition duration-200"
               >
                 Sign Up
               </Link>
@@ -54,7 +58,7 @@ export default function Navbar() {
                 <img
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
                     user.email || "User"
-                  )}&background=4f46e5&color=fff`}
+                  )}&background=1B2B55&color=fff`}
                   alt="Profile"
                   className="w-8 h-8 rounded-full border-2 border-white"
                 />
@@ -68,7 +72,7 @@ export default function Navbar() {
                   onMouseLeave={() => setMenuOpen(false)}
                 >
                   <p className="px-3 py-2 text-sm text-gray-600 border-b">
-                    {user.email?.split("@")[0] ||user.email || "User"}
+                    {user.email?.split("@")[0] ||user.email || "User" }
                   </p>
                   <Link
                     to="/profile"
