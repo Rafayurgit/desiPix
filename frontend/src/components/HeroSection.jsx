@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import ImageInput from './ImageInput'
 import ImageOutput from './ImageOutput'
 import DesiPix from "../assets/DesiPix.png";
+import PhotoJugaad from "../assets/photojugaad.png"
 import DesiPixBlue from "../assets/DesiPixBlue.png"
 import { useState } from 'react';
 import ProgressBar from '../common/ProgressBar';
@@ -35,7 +36,7 @@ const handleScrollToConverter  = () => {
             </div>
 
             <div className="w-full md:w-1/2">
-            <img src={DesiPixBlue} alt="Hero" className="w-full" />
+            <img src={PhotoJugaad} alt="Hero" className="w-full" />
             </div>
 
             
