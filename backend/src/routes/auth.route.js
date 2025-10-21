@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {signUp, signIn, logOut, refreshAccessToken, changeCurrentPassword} from "../controller/auth.controller.js";
+import {signUp, signIn, logOut, refreshAccessToken, changeCurrentPassword, verifyEmail} from "../controller/auth.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
 import { googleRedirect, googleCallback } from "../controller/auth.controller.js";
 
@@ -11,6 +11,9 @@ router.route("/signIn").post(signIn);
 //google routes
 router.get("/google", googleRedirect);
 router.get("/google/callback", googleCallback);
+
+//emailverify
+router.get("/verify-email",verifyEmail  )
 
 //secured route
 router.route("/logOut").post(verifyJwt, logOut)
