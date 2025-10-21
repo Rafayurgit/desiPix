@@ -7,12 +7,20 @@ import {
   generateRefreshToken,
 } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
+import { generateVerificationToken } from "../utils/tokenHelpers.js";
+import { sendVerificationEmail } from "../utils/emailService.js";
 
-const cookieOptions = {
+const isProduction = process.env.NODE_ENV === "production";
+
+export const cookieOptions = {
   httpOnly: true,
-  secure: false,
-  sameSite: 'lax' ,
+  secure: isProduction,                       // true only on HTTPS
+  sameSite: isProduction ? "none" : "lax",    // lax for localhost
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,            // 7 days
 };
+
+
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -160,6 +168,18 @@ const signUp = async (req, res) => {
       password,
     });
 
+    const { token, expiry } = generateVerificationToken();
+    user.verificationToken = token;
+    user.verificationTokenExpiry = expiry;
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      await sendVerificationEmail(user.email, token);
+    } catch (err) {
+      console.error("Email sending failed:", err);
+      // optionally continue without blocking signup
+    }
+
     //now to send user data back to frontend for keeping it login
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken"
@@ -193,6 +213,27 @@ const signIn = async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: "User does not exist SingUP first!" });
   }
+
+  if (!user.isVerified) {
+  // Optionally send a new verification email
+  try {
+    const { token, expiry } = generateVerificationToken();
+    user.verificationToken = token;
+    user.verificationTokenExpiry = expiry;
+    await user.save({ validateBeforeSave: false });
+
+    await sendVerificationEmail(user.email, token);
+  } catch (err) {
+    console.error("Failed to resend verification email:", err);
+    // continue without blocking login
+  }
+
+  return res.status(403).json({
+    error: "Please verify your email before logging in.",
+    message: "A new verification email has been sent to your inbox."
+  });
+}
+
 
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
@@ -240,7 +281,6 @@ const logOut = async (req, res) => {
 };
 
 const refreshAccessToken = async (req, res) => {
-
   console.log("All cookies received:", req.headers.cookie);
   console.log("req.cookies object:", req.cookies);
 
@@ -277,7 +317,7 @@ const refreshAccessToken = async (req, res) => {
     return res
       .status(200)
       .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json({ message: "Access token refreshed", accessToken: accessToken });
   } catch (error) {
     return res
@@ -302,4 +342,29 @@ const changeCurrentPassword = async (req, res) => {
   return res.status(200).json({ message: "Password changes successfully" });
 };
 
-export { signUp, signIn, logOut, refreshAccessToken, changeCurrentPassword };
+const verifyEmail = async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: "Token missing" });
+
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationTokenExpiry: { $gt: Date.now() },
+  });
+  if (!user) return res.status(400).json({ error: "Invalid or expired token" });
+
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  user.verificationTokenExpiry = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json({ message: "Email verified successfully" });
+};
+
+export {
+  signUp,
+  signIn,
+  logOut,
+  refreshAccessToken,
+  changeCurrentPassword,
+  verifyEmail,
+};
