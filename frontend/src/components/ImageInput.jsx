@@ -190,7 +190,7 @@ export default function ImageInput({ setConvertedUrl, setLoading, loading, setPr
           </div>
         </>
       ) : (
-        <div {...getRootProps()} className="w-full p-6 border-2 border-dashed rounded-lg bg-white hover:bg-gray-100 cursor-pointer text-center transition-colors duration-300 border-indigo-400" aria-label="File upload area">
+        <div {...getRootProps()} className="w-full p-6 border-2 border-dashed rounded-lg bg-white hover:bg-gray-100 cursor-pointer text-center transition-colors duration-300 border-[#1B2B55]" aria-label="File upload area">
           <input {...getInputProps()} aria-label="Upload images" />
           <label className="block cursor-pointer">
             <p className="font-medium">Upload or drag your images here</p>
