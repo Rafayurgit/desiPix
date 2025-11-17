@@ -27,7 +27,7 @@ const handleScrollToConverter  = () => {
         <div className="container mx-auto px-4 flex flex-col-reverse md:flex-row items-center gap-10">
 
             <div className="md:w-1/2 text-center md:text-left">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Welcome to DesiPix</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">Welcome to PhotoJugaad</h1>
             <p className="text-lg text-gray-600 mb-6">Convert any image into any image extension</p>
             <button 
             onClick={handleScrollToConverter }
