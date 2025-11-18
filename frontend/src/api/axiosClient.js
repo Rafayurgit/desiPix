@@ -2,61 +2,81 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ,
-  withCredentials: true, // important to send/receive httpOnly cookies
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true, // allows sending cookies to backend
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
+
+api.interceptors.request.use(
+  (config) => {
+    const token = window.__ACCESS_TOKEN__;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 let isRefreshing = false;
-let failedQueue = [];
+let refreshSubscribers = [];
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => (error ? prom.reject(error) : prom.resolve(token)));
-  failedQueue = [];
-};
+function onRefreshed(token) {
+  refreshSubscribers.map((cb) => cb(token));
+  refreshSubscribers = [];
+}
 
-api.interceptors.request.use(config => {
-  // Access token will be provided by a function to avoid stale closures
-  const token = window.__ACCESS_TOKEN__; // see AuthProvider below (keep in-memory)
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+function addRefreshSubscriber(callback) {
+  refreshSubscribers.push(callback);
+}
 
-// Response interceptor to handle 401
 api.interceptors.response.use(
-  res => res,
-  err => {
-    const originalRequest = err.config;
-    if (err.response && err.response.status === 401 && !originalRequest._retry) {
+  (res) => res,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (!error.response) return Promise.reject(error);
+
+    // If unauthorized and not retried yet
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = "Bearer " + token;
-          return api(originalRequest);
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          });
         });
       }
 
-      originalRequest._retry = true;
       isRefreshing = true;
+      try {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+        const newToken = data.accessToken;
+        window.__ACCESS_TOKEN__ = newToken;
 
-      return new Promise((resolve, reject) => {
-        api.post("/auth/refresh")
-          .then(({ data }) => {
-            const newToken = data.accessToken;
-            // Provide a place to store it in-memory for request interceptors:
-            window.__ACCESS_TOKEN__ = newToken;
-            processQueue(null, newToken);
-            originalRequest.headers.Authorization = "Bearer " + newToken;
-            resolve(api(originalRequest));
-          })
-          .catch(err2 => {
-            processQueue(err2, null);
-            reject(err2);
-          })
-          .finally(() => { isRefreshing = false; });
-      });
+        onRefreshed(newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (err) {
+        window.__ACCESS_TOKEN__ = null;
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
-    return Promise.reject(err);
+
+    return Promise.reject(error);
   }
 );
 
