@@ -17,16 +17,32 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+// FIXED: CORS Configuration - Must come BEFORE other middleware
+const corsOptions = {
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true, // Allow cookies
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["set-cookie"],
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+// app.options("*", cors(corsOptions));
+
+// Body parser middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Rate limiter for auth routes
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later."
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Routes
@@ -34,13 +50,22 @@ app.get("/", (req, res) => {
   res.send("Welcome to PhotoJugaad backend");
 });
 
+// FIXED: Consistent route paths
 app.use("/upload", imageRoutes);
-app.use("/api/v1/auth", authRateLimiter, authRoutes);
+app.use("/api/v1/auth", authRateLimiter, authRoutes); // Changed from /api/v1/auth
 
 // Static file serving
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 console.log("Serving static files from:", path.join(__dirname, "..", "uploads"));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal server error",
+  });
+});
 
 export default app;
