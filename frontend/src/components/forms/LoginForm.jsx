@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PasswordField from "./PasswordField";
 import { useAuth } from "../../hooks/useAuth";
 import GoogleLoginButton from "./GoogleLoginButton";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const { signIn } = useAuth();
@@ -11,7 +11,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ export default function LoginForm() {
     setLoading(true);
     try {
       await signIn(form);
-      navigate("/dashboard")
+      navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials");
     } finally {
@@ -28,15 +29,13 @@ export default function LoginForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5"
-    >
-      {/* Header */}
+    <form onSubmit={handleSubmit} className="space-y-5">
 
-      {/* Email Field */}
+      {/* Email */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Email
+        </label>
         <input
           type="email"
           name="email"
@@ -48,21 +47,41 @@ export default function LoginForm() {
         />
       </div>
 
-      {/* Password Field */}
+      {/* Password */}
       <PasswordField
         name="password"
         value={form.password}
         onChange={handleChange}
+        label="Password"
       />
 
-      {/* Error Message */}
+      {/* Forgot Password */}
+      <div className="flex justify-end -mt-2">
+        <Link
+          to="/forgot-password"
+          className="text-sm text-[#1B2B55] hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
+      {/* Error */}
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 border border-red-200 p-2 rounded-md">
+        <div className="text-sm text-red-500 bg-red-50 border border-red-200 p-2 rounded-md">
           {error}
-        </p>
+
+          <div className="text-xs mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-[#1B2B55] font-medium underline"
+            >
+              Reset your password
+            </Link>
+          </div>
+        </div>
       )}
 
-      {/* Submit Button */}
+      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
@@ -82,15 +101,15 @@ export default function LoginForm() {
         <div className="h-px bg-gray-300 w-1/3"></div>
       </div>
 
-      {/* Google Login */}
+      {/* Google */}
       <GoogleLoginButton />
 
-      {/* Signup Redirect */}
+      {/* Signup redirect */}
       <p className="text-center text-sm text-gray-500 mt-4">
         Don’t have an account?{" "}
-        <a href="/signIn" className="text-[#1B2B55] font-medium hover:underline">
+        <Link to="/signIn" className="text-[#1B2B55] font-medium hover:underline">
           Sign up
-        </a>
+        </Link>
       </p>
     </form>
   );
