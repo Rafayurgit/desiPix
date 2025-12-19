@@ -8,3 +8,6 @@ export const refresh = () => api.post("/api/v1/auth/refresh", {}, { withCredenti
 
 export const logOut = () => api.post("/api/v1/auth/logOut", {}, {withCredentials:true});
 export const changePassword = (payload) => api.post("/api/v1/auth/changePassword", payload);
+
+export const forgotPassword = (email) =>api.post("/api/v1/auth/forgot-password", { email });
+export const resetPassword = (payload) =>api.post("/api/v1/auth/reset-password", payload);
