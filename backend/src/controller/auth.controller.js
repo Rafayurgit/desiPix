@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import { randomBytes } from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { User } from "../models/user.model.js";
 import {
@@ -8,19 +9,26 @@ import {
 } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import { generateVerificationToken } from "../utils/tokenHelpers.js";
-import { sendVerificationEmail } from "../utils/emailService.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../utils/email/resendEmailService.js";
 
-const isProduction = process.env.NODE_ENV === "production";
+// const isProduction = process.env.NODE_ENV === "production";
+
+// // FIXED: Cookie options - if sameSite=none, secure MUST be true
+// export const cookieOptions = {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production", // true in production
+//   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//   path: "/",
+//   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+// };
 
 export const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,                       // true only on HTTPS
-  sameSite: isProduction ? "none" : "lax",    // lax for localhost
+  secure: false, // false for localhost; true in production
+  sameSite: "lax", // ⬅️ REQUIRED for cross-origin cookies
   path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000,            // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
-
-
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -191,8 +199,14 @@ const signUp = async (req, res) => {
         .json({ error: "something went wrong while registering user" });
     }
 
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+      user._id
+    );
+
     return res
       .status(201)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json({ message: "User created successfully", user: createdUser });
   } catch (error) {
     console.error("Signup error:", error);
@@ -215,25 +229,24 @@ const signIn = async (req, res) => {
   }
 
   if (!user.isVerified) {
-  // Optionally send a new verification email
-  try {
-    const { token, expiry } = generateVerificationToken();
-    user.verificationToken = token;
-    user.verificationTokenExpiry = expiry;
-    await user.save({ validateBeforeSave: false });
+    // Optionally send a new verification email
+    try {
+      const { token, expiry } = generateVerificationToken();
+      user.verificationToken = token;
+      user.verificationTokenExpiry = expiry;
+      await user.save({ validateBeforeSave: false });
 
-    await sendVerificationEmail(user.email, token);
-  } catch (err) {
-    console.error("Failed to resend verification email:", err);
-    // continue without blocking login
+      await sendVerificationEmail(user.email, token);
+    } catch (err) {
+      console.error("Failed to resend verification email:", err);
+      // continue without blocking login
+    }
+
+    return res.status(403).json({
+      error: "Please verify your email before logging in.",
+      message: "A new verification email has been sent to your inbox.",
+    });
   }
-
-  return res.status(403).json({
-    error: "Please verify your email before logging in.",
-    message: "A new verification email has been sent to your inbox."
-  });
-}
-
 
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
@@ -287,11 +300,11 @@ const refreshAccessToken = async (req, res) => {
   console.log("Cookies received:", req.cookies);
   console.log("Body received:", req.body);
 
-  const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken = req.cookies?.refreshToken || null;
   console.log("Incoming refresh token:", incomingRefreshToken);
 
   if (!incomingRefreshToken) {
+    console.error("No refresh token found in cookies");
     return res.status(401).json({ error: "Unauthorized request" });
   }
 
@@ -342,6 +355,59 @@ const changeCurrentPassword = async (req, res) => {
   return res.status(200).json({ message: "Password changes successfully" });
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({ error: "No user found with this email" });
+  }
+
+  // const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetToken = randomBytes(32).toString("hex");
+
+  const resetTokenExpiry = Date.now() + 1000 * 60 * 20; // 20 mins
+
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpiry = resetTokenExpiry;
+  await user.save({ validateBeforeSave: false });
+
+  try {
+    await sendPasswordResetEmail(user.email, resetToken);
+  } catch (error) {
+    console.error("Failed to send reset email:", error);
+  }
+
+  return res.json({ message: "Password reset email sent" });
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword)
+    return res.status(400).json({ error: "Invalid request" });
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ error: "Invalid or expired reset token" });
+  }
+
+  user.password = newPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpiry = undefined;
+
+  await user.save({ validateBeforeSave: false });
+
+  return res.json({ message: "Password reset successfully" });
+};
+
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
   if (!token) return res.status(400).json({ error: "Token missing" });
@@ -366,5 +432,7 @@ export {
   logOut,
   refreshAccessToken,
   changeCurrentPassword,
+  forgotPassword,
+  resetPassword,
   verifyEmail,
 };

@@ -1,25 +1,38 @@
 import { Router } from "express";
-import {signUp, signIn, logOut, refreshAccessToken, changeCurrentPassword, verifyEmail} from "../controller/auth.controller.js";
+import {
+  signUp,
+  signIn,
+  logOut,
+  refreshAccessToken,
+  changeCurrentPassword,
+  verifyEmail,
+  googleRedirect,
+  googleCallback,
+  forgotPassword,
+  resetPassword
+} from "../controller/auth.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
-import { googleRedirect, googleCallback } from "../controller/auth.controller.js";
 
 const router = Router();
 
-router.route("/signUp").post(signUp);
-router.route("/signIn").post(signIn);
+// Public routes
+router.post("/signUp", signUp);
+router.post("/signIn", signIn);
+router.get("/verify-email", verifyEmail);
 
-//google routes
+// Google OAuth routes
 router.get("/google", googleRedirect);
 router.get("/google/callback", googleCallback);
 
-//emailverify
-router.get("/verify-email",verifyEmail  )
+// Semi-protected routes (uses refresh token)
+router.post("/refresh", refreshAccessToken);
 
-//secured route
-router.route("/logOut").post(verifyJwt, logOut)
-router.route("/refresh").post(refreshAccessToken)
-router.route("/changePassword").post(verifyJwt, changeCurrentPassword)
+// Protected routes (require access token)
+router.post("/logOut", verifyJwt, logOut);
+router.post("/changePassword", verifyJwt, changeCurrentPassword);
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 
-
-export default router
+export default router;
