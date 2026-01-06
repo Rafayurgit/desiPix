@@ -19,8 +19,14 @@ export default function SignUpForm() {
     setError(null);
     setLoading(true);
     try {
+      console.log("📝 Attempting signup...");
       await signUp(form); // centralized signup + auto login
-      navigate("/dashboard")
+      await new Promise(resolve => setTimeout(resolve, 100));
+    console.log("✅ Signup successful");
+    console.log("🍪 Cookies after signup:", document.cookie);
+
+    console.log("🚀 Navigating to dashboard...");
+      navigate("/dashboard", { replace: true })
     } catch (err) {
       setError(err.response?.data?.error || err.message || "Signup failed");
     } finally {

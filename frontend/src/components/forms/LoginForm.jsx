@@ -19,10 +19,21 @@ export default function LoginForm() {
     setError(null);
     setLoading(true);
     try {
-      await signIn(form);
-      navigate("/dashboard");
+      console.log("🔐 Attempting login...");
+      // await signIn(form);
+      const result = await signIn(form);
+
+      console.log("✅ Login successful, result:", result);
+      console.log("🍪 Cookies after login:", document.cookie);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log("🚀 Navigating to dashboard...");
+      navigate("/dashboard", { replace: true });
+
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid credentials");
+
+      setError(err.response?.data?.message || err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
