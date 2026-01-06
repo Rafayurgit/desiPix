@@ -14,21 +14,21 @@ import { sendVerificationEmail, sendPasswordResetEmail } from "../utils/email/re
 // const isProduction = process.env.NODE_ENV === "production";
 
 // // FIXED: Cookie options - if sameSite=none, secure MUST be true
-// export const cookieOptions = {
-//   httpOnly: true,
-//   secure: process.env.NODE_ENV === "production", // true in production
-//   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-//   path: "/",
-//   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-// };
-
 export const cookieOptions = {
   httpOnly: true,
-  secure: false, // false for localhost; true in production
-  sameSite: "lax", // ⬅️ REQUIRED for cross-origin cookies
+  secure: process.env.NODE_ENV === "production", // true in production
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
+
+// export const cookieOptions = {
+//   httpOnly: true,
+//   secure: false, // false for localhost; true in production
+//   sameSite: "lax", // ⬅️ REQUIRED for cross-origin cookies
+//   path: "/",
+//   maxAge: 7 * 24 * 60 * 60 * 1000,
+// };
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -260,12 +260,17 @@ const signIn = async (req, res) => {
   const loggedUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
+    console.log("🍪 Setting cookies with options:", cookieOptions);
+  console.log("🔑 Access Token Length:", accessToken?.length);
+  console.log("🔑 Refresh Token Length:", refreshToken?.length);
+
+   console.log("📤 Response headers:", response.getHeaders?.());
 
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
-    .json({ message: "User loggedIn successfully", accessToken: accessToken });
+    .json({ message: "User loggedIn successfully", accessToken: accessToken, user: loggedUser  });
 };
 
 const logOut = async (req, res) => {
