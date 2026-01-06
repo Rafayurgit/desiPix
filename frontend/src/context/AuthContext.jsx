@@ -35,7 +35,9 @@ export function AuthProvider({ children }) {
    * ---------------------------- */
   const refresh = useCallback(async () => {
     try {
-      console.log("🌐 Attempting token refresh. Cookies:", document.cookie);
+      console.log("🌐 Attempting token refresh. Cookies:");
+      console.log("📋 Current cookies:", document.cookie);
+
       const { data } = await apiRefresh();
       if (data?.accessToken) {
         console.log("✅ Refresh successful");
@@ -47,7 +49,7 @@ export function AuthProvider({ children }) {
         return false;
       }
     } catch (err) {
-      console.error("❌ Refresh failed", err?.response?.status, err);
+      console.error("❌ Refresh failed:", err?.response?.status, err?.response?.data);
       setTokenInMemory(null);
       return false;
     }
@@ -56,16 +58,45 @@ export function AuthProvider({ children }) {
   /** ----------------------------
    *  Initial Token Load (on mount)
    * ---------------------------- */
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   (async () => {
+  //     // Wait briefly for cookies to load
+  //     await new Promise((r) => setTimeout(r, 150));
+  //     const success = await refresh();
+  //     if (isMounted) setLoading(false);
+  //     if (!success) console.warn("Initial refresh failed – user not logged in");
+  //   })();
+  //   return () => (isMounted = false);
+  // }, [refresh]);
+
   useEffect(() => {
     let isMounted = true;
+    
     (async () => {
-      // Wait briefly for cookies to load
-      await new Promise((r) => setTimeout(r, 150));
-      const success = await refresh();
-      if (isMounted) setLoading(false);
-      if (!success) console.warn("Initial refresh failed – user not logged in");
+      // Check if there's any indication of existing session
+      const hasCookies = document.cookie.includes('accessToken') || document.cookie.includes('refreshToken');
+      const hasStoredToken = window.__ACCESS_TOKEN__;
+      
+      console.log("🔍 Checking for existing session...");
+      console.log("   Has cookies:", hasCookies);
+      console.log("   Has stored token:", !!hasStoredToken);
+      
+      if (hasCookies || hasStoredToken) {
+        console.log("✅ Found potential session, attempting refresh...");
+        await refresh();
+      } else {
+        console.log("ℹ️ No existing session found, skipping initial refresh");
+      }
+      
+      if (isMounted) {
+        setLoading(false);
+      }
     })();
-    return () => (isMounted = false);
+    
+    return () => {
+      isMounted = false;
+    };
   }, [refresh]);
 
   /** ----------------------------
@@ -75,19 +106,49 @@ export function AuthProvider({ children }) {
     try {
       console.log("🔑 Signing in...");
       const { data } = await apiSignIn(credentials.email, credentials.password);
-      setTokenInMemory(data.accessToken);
+
+      if (data.accessToken) {
+        setTokenInMemory(data.accessToken);
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log("🍪 Cookies after login:", document.cookie);
       setLoading(false); // ✅ FIX: stop loading after successful login
       console.log("✅ Login success, user set");
       return data;
     } catch (err) {
-      console.error("❌ Sign-in failed", err);
+      console.error("❌ Sign-in failed:", err?.response?.data || err);
       throw err;
     }
   };
 
-  const signUp = async (payload) => {
-    await apiSignUp(payload);
-    return signIn({ email: payload.email, password: payload.password });
+  // const signUp = async (payload) => {
+  //   await apiSignUp(payload);
+  //   return signIn({ email: payload.email, password: payload.password });
+  // };
+
+    const signUp = async (payload) => {
+    try {
+      console.log("📝 Signing up...");
+      const { data } = await apiSignUp(payload);
+      
+      console.log("✅ Signup API success");
+      
+      // SignUp should auto-login, so check for token
+      if (data.accessToken) {
+        setTokenInMemory(data.accessToken);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log("🍪 Cookies after signup:", document.cookie);
+        setLoading(false);
+        return data;
+      }
+      
+      // If no token in response, fallback to sign in
+      return signIn({ email: payload.email, password: payload.password });
+    } catch (err) {
+      console.error("❌ Signup failed:", err?.response?.data || err);
+      setLoading(false);
+      throw err;
+    }
   };
 
   const signOut = async () => {
@@ -119,6 +180,7 @@ export function AuthProvider({ children }) {
         signOut,
         refresh,
         changePassword,
+        setTokenInMemory
       }}
     >
       {children}

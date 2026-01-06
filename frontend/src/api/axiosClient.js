@@ -54,11 +54,13 @@ api.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        // const { data } = await axios.post(
+        //   `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
+        //   {},
+        //   { withCredentials: true }
+        // );
+        // Correct - uses configured api client
+        const { data } = await api.post("/api/v1/auth/refresh");
         const newToken = data.accessToken;
         window.__ACCESS_TOKEN__ = newToken;
 
